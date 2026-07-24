@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const authMiddleware = require('./middlewares/authMiddleware');
+const categoryRoutes = require('./routes/categoryRoutes');
 
 const app = express();
 
@@ -12,6 +13,7 @@ app.use(express.json());   // permite o servidor entender JSON no corpo das requ
 
 // Rotas
 app.use('/auth', authRoutes);
+app.use('/categories', categoryRoutes);
 
 // Rota de teste simples
 app.get('/health', (req, res) => {
