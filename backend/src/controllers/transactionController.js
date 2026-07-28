@@ -9,7 +9,7 @@ async function create(req, res) {
   }
 
   try {
-    // Confere se a categoria existe E pertence a esse usuário
+    // categoria existe E pertence ao usuário
     const category = await prisma.category.findFirst({
       where: { id: categoryId, userId },
     });
@@ -50,7 +50,40 @@ async function list(req, res) {
     return res.status(500).json({ error: 'Erro ao listar transações.' });
   }
 }
+async function summary(req, res) {
+  const userId = req.userId;
 
+  try {
+    // Busca todas as transações do usuário, já trazendo o tipo da categoria
+    const transactions = await prisma.transaction.findMany({
+      where: { userId },
+      include: { category: true },
+    });
+
+    let totalIncome = 0;
+    let totalExpense = 0;
+
+    for (const transaction of transactions) {
+      const amount = Number(transaction.amount);
+      if (transaction.category.type === 'INCOME') {
+        totalIncome += amount;
+      } else if (transaction.category.type === 'EXPENSE') {
+        totalExpense += amount;
+      }
+    }
+
+    const balance = totalIncome - totalExpense;
+
+    return res.status(200).json({
+      totalIncome,
+      totalExpense,
+      balance,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Erro ao calcular resumo.' });
+  }
+}
 async function update(req, res) {
   const { id } = req.params;
   const { description, amount, date, categoryId } = req.body;
@@ -104,4 +137,4 @@ async function remove(req, res) {
   }
 }
 
-module.exports = { create, list, update, remove };
+module.exports = { create, list, update, remove, summary };
