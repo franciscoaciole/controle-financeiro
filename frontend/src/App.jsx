@@ -3,11 +3,12 @@ import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Transactions from './pages/Transactions';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
 
-  if (loading) return null; // ou um spinner de carregamento
+  if (loading) return null;
 
   return user ? children : <Navigate to="/login" />;
 }
@@ -22,6 +23,14 @@ function App() {
         element={
           <PrivateRoute>
             <Dashboard />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/transactions"
+        element={
+          <PrivateRoute>
+            <Transactions />
           </PrivateRoute>
         }
       />

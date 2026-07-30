@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getSummary, getTransactions } from '../services/transactions';
 import { TrendingUp, TrendingDown, LogOut } from 'lucide-react';
@@ -80,9 +81,17 @@ function Dashboard() {
         </div>
       </div>
 
+      {/* Link para a tela de transações */}
+      <Link
+        to="/transactions"
+        className="text-sm text-blue-400 hover:underline mb-6 inline-block"
+      >
+        Ver todas as transações →
+      </Link>
+
       {/* Lista de transações */}
       <div>
-        <h2 className="text-sm font-medium text-white/70 mb-3">
+        <h2 className="text-sm font-medium text-white/70 mb-3 mt-4">
           Últimas transações
         </h2>
 
