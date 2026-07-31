@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getSummary, getTransactions } from '../services/transactions';
 import { TrendingUp, TrendingDown, LogOut, ArrowRight } from 'lucide-react';
+import ExpenseChart from '../components/ExpenseChart';
 
 function Dashboard() {
   const { user, logout } = useAuth();
@@ -81,6 +82,13 @@ function Dashboard() {
         </div>
       </div>
 
+{/* Gráfico */}
+{summary?.dailyData?.length > 0 && (
+  <div className="mb-6">
+    <ExpenseChart data={summary.dailyData} />
+  </div>
+)}
+
       {/* Links de navegação */}
       <div className="flex gap-4 mb-6">
         <Link
@@ -123,6 +131,7 @@ function Dashboard() {
                       : 'text-red-400 text-sm'
                   }
                 >
+                  
                   {t.category.type === 'INCOME' ? '+' : '-'}R${' '}
                   {Number(t.amount).toFixed(2)}
                 </span>

@@ -50,40 +50,64 @@ async function list(req, res) {
     return res.status(500).json({ error: 'Erro ao listar transações.' });
   }
 }
+
 async function summary(req, res) {
   const userId = req.userId;
 
   try {
-    // Busca todas as transações do usuário, já trazendo o tipo da categoria
     const transactions = await prisma.transaction.findMany({
       where: { userId },
       include: { category: true },
+      orderBy: { date: 'asc' },
     });
 
     let totalIncome = 0;
     let totalExpense = 0;
+    const dailyMap = {};
 
     for (const transaction of transactions) {
       const amount = Number(transaction.amount);
+      const dateKey = transaction.date.toISOString().split('T')[0];
+
       if (transaction.category.type === 'INCOME') {
         totalIncome += amount;
       } else if (transaction.category.type === 'EXPENSE') {
         totalExpense += amount;
       }
+
+      if (!dailyMap[dateKey]) {
+        dailyMap[dateKey] = { date: dateKey, net: 0 };
+      }
+
+      dailyMap[dateKey].net +=
+        transaction.category.type === 'INCOME' ? amount : -amount;
     }
 
     const balance = totalIncome - totalExpense;
+
+    // Transforma o mapa em array ordenado e calcula o saldo acumulado
+    const sortedDays = Object.values(dailyMap).sort((a, b) =>
+      a.date.localeCompare(b.date)
+    );
+
+    let running = 0;
+    const dailyData = sortedDays.map((day) => {
+      running += day.net;
+      return { date: day.date, balance: running };
+    });
 
     return res.status(200).json({
       totalIncome,
       totalExpense,
       balance,
+      dailyData,
     });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Erro ao calcular resumo.' });
   }
 }
+
 async function update(req, res) {
   const { id } = req.params;
   const { description, amount, date, categoryId } = req.body;
