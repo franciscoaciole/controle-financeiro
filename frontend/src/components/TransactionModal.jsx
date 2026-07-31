@@ -32,7 +32,7 @@ function TransactionModal({ isOpen, onClose, onSave, categories, transaction }) 
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center px-4 z-50">
 <div className="w-full max-w-md bg-[#14141B] border border-white/10 rounded-2xl p-6">        <div className="flex justify-between items-center gap-2 mb-6">
           <h2 className="text-lg font-semibold text-white truncate pr-2">
-            {transaction ? 'Editar transação' :'NovA transação'}
+            {transaction ? 'Editar transação' :'Nova transação'}
           </h2>
           <button onClick={onClose} className="text-white/50 hover:text-white">
             <X size={20} />

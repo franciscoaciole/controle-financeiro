@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getSummary, getTransactions } from '../services/transactions';
-import { TrendingUp, TrendingDown, LogOut } from 'lucide-react';
+import { TrendingUp, TrendingDown, LogOut, ArrowRight } from 'lucide-react';
 
 function Dashboard() {
   const { user, logout } = useAuth();
@@ -81,13 +81,21 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Link para a tela de transações */}
-      <Link
-        to="/transactions"
-        className="text-sm text-blue-400 hover:underline mb-6 inline-block"
-      >
-        Ver todas as transações →
-      </Link>
+      {/* Links de navegação */}
+      <div className="flex gap-4 mb-6">
+        <Link
+          to="/transactions"
+          className="flex items-center gap-1 text-sm text-blue-400 hover:underline"
+        >
+          Ver transações <ArrowRight size={14} />
+        </Link>
+        <Link
+          to="/categories"
+          className="flex items-center gap-1 text-sm text-blue-400 hover:underline"
+        >
+          Gerenciar categorias <ArrowRight size={14} />
+        </Link>
+      </div>
 
       {/* Lista de transações */}
       <div>
