@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { getSummary, getTransactions } from '../services/transactions';
-import { TrendingUp, TrendingDown, LogOut, ArrowRight } from 'lucide-react';
 import ExpenseChart from '../components/ExpenseChart';
+import CategoryDonut from '../components/CategoryDonut';
+import TransactionsTable from '../components/TransactionsTable';
 
 function Dashboard() {
-  const { user, logout } = useAuth();
   const [summary, setSummary] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,113 +30,62 @@ function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <p className="text-white/60">Carregando...</p>
+      <div className="flex items-center justify-center h-full">
+        <p className="text-muted">Carregando...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 md:p-8">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">Olá, {user?.name}!</h1>
-        <button
-          onClick={logout}
-          className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm transition"
-        >
-          <LogOut size={16} />
-          Sair
-        </button>
-      </div>
-
-      {/* Card de saldo (glassmorphism) */}
-      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 mb-6">
-        <p className="text-sm text-white/50 mb-1">Saldo total</p>
-        <p className="text-3xl font-semibold">
-          R$ {summary?.balance.toFixed(2)}
+    <div>
+      <div className="mb-8">
+        <h1 className="font-display text-[22px] font-semibold tracking-tight">
+          Visão geral
+        </h1>
+        <p className="text-muted text-[12.5px] mt-1">
+          Acompanhe suas finanças em um só lugar
         </p>
       </div>
 
-      {/* Cards de receita/despesa */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-[#14141B] rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2 text-green-400">
-            <TrendingUp size={16} />
-            <span className="text-xs text-white/50">Receitas</span>
+      <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] gap-[18px] mb-[18px]">
+        <div className="bg-panel border border-panel-border rounded-[18px] backdrop-blur-xl p-[26px_28px] flex flex-col justify-between">
+          <div>
+            <p className="text-muted text-xs mb-2.5">Saldo total</p>
+            <p className="num text-[38px] md:text-[44px] font-semibold tracking-tight">
+              R$ {summary?.balance.toFixed(2)}
+            </p>
           </div>
-          <p className="text-lg font-medium text-green-400">
-            R$ {summary?.totalIncome.toFixed(2)}
-          </p>
-        </div>
-        <div className="bg-[#14141B] rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2 text-red-400">
-            <TrendingDown size={16} />
-            <span className="text-xs text-white/50">Despesas</span>
+
+          <div className="flex gap-3 mt-6">
+            <div className="flex-1 border-t border-panel-border pt-3">
+              <p className="text-[10.5px] text-muted mb-1">Receitas totais</p>
+              <p className="num text-[16.5px] font-semibold text-pos">
+                R$ {summary?.totalIncome.toFixed(2)}
+              </p>
+            </div>
+            <div className="flex-1 border-t border-panel-border pt-3">
+              <p className="text-[10.5px] text-muted mb-1">Despesas totais</p>
+              <p className="num text-[16.5px] font-semibold">
+                R$ {summary?.totalExpense.toFixed(2)}
+              </p>
+            </div>
+            <div className="flex-1 border-t border-panel-border pt-3">
+              <p className="text-[10.5px] text-muted mb-1">Economia</p>
+              <p className="num text-[16.5px] font-semibold">
+                R$ {summary?.balance.toFixed(2)}
+              </p>
+            </div>
           </div>
-          <p className="text-lg font-medium text-red-400">
-            R$ {summary?.totalExpense.toFixed(2)}
-          </p>
         </div>
+
+        <CategoryDonut transactions={transactions} />
       </div>
 
-{/* Gráfico */}
-{summary?.dailyData?.length > 0 && (
-  <div className="mb-6">
-    <ExpenseChart data={summary.dailyData} />
-  </div>
-)}
-
-      {/* Links de navegação */}
-      <div className="flex gap-4 mb-6">
-        <Link
-          to="/transactions"
-          className="flex items-center gap-1 text-sm text-blue-400 hover:underline"
-        >
-          Ver transações <ArrowRight size={14} />
-        </Link>
-        <Link
-          to="/categories"
-          className="flex items-center gap-1 text-sm text-blue-400 hover:underline"
-        >
-          Gerenciar categorias <ArrowRight size={14} />
-        </Link>
-      </div>
-
-      {/* Lista de transações */}
-      <div>
-        <h2 className="text-sm font-medium text-white/70 mb-3 mt-4">
-          Últimas transações
-        </h2>
-
-        {transactions.length === 0 ? (
-          <p className="text-white/40 text-sm">Nenhuma transação ainda.</p>
-        ) : (
-          <div className="flex flex-col gap-1">
-            {transactions.map((t) => (
-              <div
-                key={t.id}
-                className="flex justify-between items-center py-3 border-b border-white/5"
-              >
-                <div>
-                  <p className="text-sm">{t.description}</p>
-                  <p className="text-xs text-white/40">{t.category.name}</p>
-                </div>
-                <span
-                  className={
-                    t.category.type === 'INCOME'
-                      ? 'text-green-400 text-sm'
-                      : 'text-red-400 text-sm'
-                  }
-                >
-                  
-                  {t.category.type === 'INCOME' ? '+' : '-'}R${' '}
-                  {Number(t.amount).toFixed(2)}
-                </span>
-              </div>
-            ))}
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.3fr] gap-[18px]">
+        {summary?.dailyData?.length > 0 && (
+          <ExpenseChart data={summary.dailyData} currentBalance={summary.balance} />
         )}
+        <TransactionsTable transactions={transactions} />
       </div>
     </div>
   );

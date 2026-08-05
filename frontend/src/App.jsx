@@ -5,13 +5,16 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Categories from './pages/Categories';
+import Layout from './components/Layout';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
 
   if (loading) return null;
 
-  return user ? children : <Navigate to="/login" />;
+  if (!user) return <Navigate to="/login" />;
+
+  return <Layout>{children}</Layout>;
 }
 
 function App() {
@@ -36,13 +39,13 @@ function App() {
         }
       />
       <Route
-  path="/categories"
-  element={
-    <PrivateRoute>
-      <Categories />
-    </PrivateRoute>
-  }
-/>
+        path="/categories"
+        element={
+          <PrivateRoute>
+            <Categories />
+          </PrivateRoute>
+        }
+      />
       <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
   );
