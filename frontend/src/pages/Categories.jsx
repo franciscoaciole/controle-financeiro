@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Pencil, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
+import { Plus, Pencil, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
 import {
   getCategories,
   createCategory,
@@ -56,7 +55,6 @@ function Categories() {
 
   async function handleDelete(id) {
     if (!confirm('Tem certeza? Isso pode afetar transações que usam essa categoria.')) return;
-
     try {
       await deleteCategory(id);
       loadData();
@@ -68,47 +66,47 @@ function Categories() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <p className="text-white/60">Carregando...</p>
+      <div className="flex items-center justify-center h-full">
+        <p className="text-muted">Carregando...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 md:p-8">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center gap-3">
-          <Link to="/dashboard" className="text-white/50 hover:text-white">
-            <ArrowLeft size={20} />
-          </Link>
-          <h1 className="text-2xl font-bold">Categorias</h1>
+    <div>
+      <div className="flex justify-between items-start mb-8">
+        <div>
+          <h1 className="font-display text-[22px] font-semibold tracking-tight">
+            Categorias
+          </h1>
+          <p className="text-muted text-[12.5px] mt-1">
+            Organize suas receitas e despesas
+          </p>
         </div>
         <button
           onClick={openCreateModal}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg text-sm transition"
+          className="flex items-center gap-2 bg-accent text-bg px-4 py-2.5 rounded-[10px] text-[12.5px] font-semibold"
         >
-          <Plus size={16} />
-          Nova
+          <Plus size={15} />
+          Nova categoria
         </button>
       </div>
 
-      {/* Grid de categorias */}
       {categories.length === 0 ? (
-        <p className="text-white/40 text-sm">Nenhuma categoria ainda.</p>
+        <p className="text-muted text-sm">Nenhuma categoria ainda.</p>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {categories.map((cat) => (
             <div
               key={cat.id}
-              className="bg-[#14141B] rounded-xl p-4 flex flex-col gap-3"
+              className="bg-panel border border-panel-border rounded-[18px] backdrop-blur-xl p-4 flex flex-col gap-3"
             >
               <div className="flex justify-between items-start">
                 <div
                   className={`w-9 h-9 rounded-full flex items-center justify-center ${
                     cat.type === 'INCOME'
-                      ? 'bg-green-500/15 text-green-400'
-                      : 'bg-red-500/15 text-red-400'
+                      ? 'bg-pos/15 text-pos'
+                      : 'bg-neg/15 text-neg'
                   }`}
                 >
                   {cat.type === 'INCOME' ? (
@@ -121,22 +119,22 @@ function Categories() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => openEditModal(cat)}
-                    className="text-white/40 hover:text-white"
+                    className="text-muted hover:text-text"
                   >
-                    <Pencil size={14} />
+                    <Pencil size={13} />
                   </button>
                   <button
                     onClick={() => handleDelete(cat.id)}
-                    className="text-white/40 hover:text-red-400"
+                    className="text-muted hover:text-neg"
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={13} />
                   </button>
                 </div>
               </div>
 
               <div>
-                <p className="text-sm font-medium">{cat.name}</p>
-                <p className="text-xs text-white/40">
+                <p className="text-[13px] font-medium">{cat.name}</p>
+                <p className="text-[10.5px] text-muted mt-0.5">
                   {cat.type === 'INCOME' ? 'Receita' : 'Despesa'}
                 </p>
               </div>
