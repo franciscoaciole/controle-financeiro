@@ -4,6 +4,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
+const prisma = require('./lib/prisma');
 
 const app = express();
 
@@ -31,8 +32,15 @@ app.use('/categories', categoryRoutes);
 app.use('/transactions', transactionRoutes);
 
 // Rota de teste simples
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+app.get('/health', async (req, res) => {
+  try {
+    // faz uma consulta simples pra manter o banco (Supabase) ativo
+    await prisma.user.count();
+    res.json({ status: 'ok', database: 'connected' });
+  } catch (error) {
+    console.error('Erro ao consultar banco no /health:', error);
+    res.status(500).json({ status: 'error', database: 'disconnected' });
+  }
 });
 
 const PORT = process.env.PORT || 3000;
