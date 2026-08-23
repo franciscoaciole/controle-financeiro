@@ -10,7 +10,7 @@ const app = express();
 
 // Middlewares globais
 const allowedOrigins = [
-  'https://controle-financeiro-sooty-xi.vercel.app',
+  'https://ciole.vercel.app',
   'http://localhost:5173',
 ];
 
