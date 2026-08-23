@@ -8,7 +8,21 @@ const transactionRoutes = require('./routes/transactionRoutes');
 const app = express();
 
 // Middlewares globais
-app.use(cors()); // por enquanto libera geral; ajustamos para restringir depois do deploy do frontend
+const allowedOrigins = [
+  'https://controle-financeiro-sooty-xi.vercel.app',
+  'http://localhost:5173',
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // permite requisições sem "origin" (ex: Postman, curl) e as da lista
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Não permitido pelo CORS'));
+    }
+  },
+}));
 app.use(express.json());
 
 // Rotas
