@@ -10,6 +10,7 @@ const app = express();
 
 // Middlewares globais
 const allowedOrigins = [
+  'https://meufinanmais.vercel.app',
   'https://ciole.vercel.app',
   'http://localhost:5173',
 ];
