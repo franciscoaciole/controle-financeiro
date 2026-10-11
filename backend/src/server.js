@@ -32,6 +32,11 @@ app.use('/auth', authRoutes);
 app.use('/categories', categoryRoutes);
 app.use('/transactions', transactionRoutes);
 
+// Rota leve só para manter o servidor acordado (não toca no banco)
+app.get('/ping', (req, res) => {
+  res.send('pong');
+});
+
 // Rota de teste simples
 app.get('/health', async (req, res) => {
   try {
