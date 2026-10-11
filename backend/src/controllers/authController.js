@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const defaultCategories = require('../lib/defaultCategories');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
@@ -20,9 +21,21 @@ async function register(req, res) {
     // Gera o hash da senha (nunca salvamos a senha original no banco!)
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Cria o usuário no banco de dados
-    const user = await prisma.user.create({
-      data: { name, email, passwordHash },
+    // Cria o usuário e as categorias padrão juntos:
+    // se uma das duas falhar, nenhuma é salva
+    const user = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: { name, email, passwordHash },
+      });
+
+      await tx.category.createMany({
+        data: defaultCategories.map((cat) => ({
+          ...cat,
+          userId: newUser.id,
+        })),
+      });
+
+      return newUser;
     });
 
     // Retorna os dados do usuário, SEM a senha/hash
