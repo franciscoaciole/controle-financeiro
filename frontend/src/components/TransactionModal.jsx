@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { X, Sparkles } from 'lucide-react';
 
+// Palavras-chave associadas a cada categoria.
+// A busca ignora maiúsculas/minúsculas e acentos.
 const CATEGORY_KEYWORDS = {
   'Salário': ['salario', 'salário', 'pagamento', 'holerite', 'pix recebido'],
   'Alimentação': ['mercado', 'supermercado', 'ifood', 'restaurante', 'padaria', 'lanche', 'comida', 'almoco', 'almoço', 'jantar'],
@@ -33,6 +35,10 @@ function suggestCategory(description, categories) {
   }
   return null;
 }
+
+// Estilo único para todos os campos do formulário
+const inputClass =
+  'w-full bg-panel-strong border border-panel-border rounded-[10px] px-4 py-3 text-[13px] text-text placeholder:text-muted outline-none transition focus:border-accent/60';
 
 function TransactionModal({ isOpen, onClose, onSave, categories, transaction }) {
   const [description, setDescription] = useState('');
@@ -91,68 +97,84 @@ function TransactionModal({ isOpen, onClose, onSave, categories, transaction }) 
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center px-4 z-50">
-      <div className="w-full max-w-md bg-[#14141B] border border-white/10 rounded-2xl p-6">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center px-4 z-50">
+      <div className="w-full max-w-md bg-panel backdrop-blur-xl border border-panel-border rounded-[18px] p-6">
         <div className="flex justify-between items-center gap-2 mb-6">
-          <h2 className="text-lg font-semibold text-white truncate pr-2">
+          <h2 className="font-display text-[17px] font-semibold tracking-tight truncate pr-2">
             {transaction ? 'Editar transação' : 'Nova transação'}
           </h2>
-          <button onClick={onClose} className="text-white/50 hover:text-white">
-            <X size={20} />
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-muted hover:text-text transition"
+          >
+            <X size={18} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <input
-            type="text"
-            placeholder="Descrição"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="bg-white/10 text-white placeholder-white/40 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-          <input
-            type="number"
-            step="0.01"
-            placeholder="Valor"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="bg-white/10 text-white placeholder-white/40 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="bg-white/10 text-white rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[11px] text-muted">Descrição</span>
+            <input
+              type="text"
+              placeholder="Ex.: Mercado, Uber, Netflix"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className={inputClass}
+              required
+            />
+          </label>
 
-          <div className="flex flex-col gap-1.5">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[11px] text-muted">Valor (R$)</span>
+            <input
+              type="number"
+              step="0.01"
+              placeholder="0,00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className={`${inputClass} [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
+              required
+            />
+          </label>
+
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[11px] text-muted">Data</span>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className={`${inputClass} [color-scheme:dark]`}
+              required
+            />
+          </label>
+
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[11px] text-muted">Categoria</span>
             <select
               value={categoryId}
               onChange={handleCategoryChange}
-              className="bg-white/10 text-white rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+              className={`${inputClass} [color-scheme:dark]`}
               required
             >
               {categories.map((cat) => (
-                <option key={cat.id} value={cat.id} className="bg-[#14141B]">
+                <option key={cat.id} value={cat.id}>
                   {cat.name} ({cat.type === 'INCOME' ? 'Receita' : 'Despesa'})
                 </option>
               ))}
             </select>
             {wasSuggested && (
-              <span className="flex items-center gap-1.5 text-[11px] text-[#4ED9A0] px-1">
+              <span className="flex items-center gap-1.5 text-[11px] text-pos px-1">
                 <Sparkles size={11} />
                 Categoria sugerida automaticamente
               </span>
             )}
-          </div>
+          </label>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg py-3 mt-2 transition"
+            className="bg-accent text-bg rounded-[10px] py-3 mt-2 text-[13px] font-semibold transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? 'Salvando...' : 'Salvar'}
           </button>
