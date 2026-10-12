@@ -1,11 +1,48 @@
 const prisma = require('../lib/prisma');
 
+const MAX_AMOUNT = 999999999.99;
+
+// Validadores: devolvem o valor limpo, ou null se for inválido
+function parseDescription(value) {
+  if (typeof value !== 'string') return null;
+  const text = value.trim();
+  if (text.length === 0 || text.length > 100) return null;
+  return text;
+}
+
+function parseAmount(value) {
+  if (typeof value !== 'number' && typeof value !== 'string') return null;
+  if (typeof value === 'string' && value.trim() === '') return null;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0 || n > MAX_AMOUNT) return null;
+  return Math.round(n * 100) / 100; // 2 casas decimais
+}
+
+function parseDate(value) {
+  if (typeof value !== 'string') return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 async function create(req, res) {
   const { description, amount, date, categoryId } = req.body;
   const userId = req.userId;
 
-  if (!description || !amount || !date || !categoryId) {
-    return res.status(400).json({ error: 'Descrição, valor, data e categoria são obrigatórios.' });
+  const parsedDescription = parseDescription(description);
+  const parsedAmount = parseAmount(amount);
+  const parsedDate = parseDate(date);
+
+  if (!parsedDescription) {
+    return res.status(400).json({ error: 'Informe uma descrição de até 100 caracteres.' });
+  }
+  if (parsedAmount === null) {
+    return res.status(400).json({ error: 'O valor deve ser um número maior que zero.' });
+  }
+  if (!parsedDate) {
+    return res.status(400).json({ error: 'Data inválida.' });
+  }
+  if (typeof categoryId !== 'string' || !categoryId) {
+    return res.status(400).json({ error: 'Categoria é obrigatória.' });
   }
 
   try {
@@ -20,9 +57,9 @@ async function create(req, res) {
 
     const transaction = await prisma.transaction.create({
       data: {
-        description,
-        amount,
-        date: new Date(date),
+        description: parsedDescription,
+        amount: parsedAmount,
+        date: parsedDate,
         userId,
         categoryId,
       },
@@ -113,6 +150,33 @@ async function update(req, res) {
   const { description, amount, date, categoryId } = req.body;
   const userId = req.userId;
 
+  // Valida só o que foi enviado; o que não veio fica como está
+  const data = {};
+
+  if (description !== undefined) {
+    const parsed = parseDescription(description);
+    if (!parsed) {
+      return res.status(400).json({ error: 'Informe uma descrição de até 100 caracteres.' });
+    }
+    data.description = parsed;
+  }
+
+  if (amount !== undefined) {
+    const parsed = parseAmount(amount);
+    if (parsed === null) {
+      return res.status(400).json({ error: 'O valor deve ser um número maior que zero.' });
+    }
+    data.amount = parsed;
+  }
+
+  if (date !== undefined) {
+    const parsed = parseDate(date);
+    if (!parsed) {
+      return res.status(400).json({ error: 'Data inválida.' });
+    }
+    data.date = parsed;
+  }
+
   try {
     const transaction = await prisma.transaction.findFirst({
       where: { id, userId },
@@ -122,14 +186,23 @@ async function update(req, res) {
       return res.status(404).json({ error: 'Transação não encontrada.' });
     }
 
+    if (categoryId !== undefined) {
+      if (typeof categoryId !== 'string' || !categoryId) {
+        return res.status(400).json({ error: 'Categoria inválida.' });
+      }
+      // a nova categoria também precisa existir e ser do mesmo usuário
+      const category = await prisma.category.findFirst({
+        where: { id: categoryId, userId },
+      });
+      if (!category) {
+        return res.status(404).json({ error: 'Categoria não encontrada.' });
+      }
+      data.categoryId = categoryId;
+    }
+
     const updated = await prisma.transaction.update({
       where: { id },
-      data: {
-        description,
-        amount,
-        date: date ? new Date(date) : undefined,
-        categoryId,
-      },
+      data,
     });
 
     return res.status(200).json(updated);
