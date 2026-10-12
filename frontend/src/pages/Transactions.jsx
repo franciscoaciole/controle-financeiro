@@ -8,6 +8,7 @@ import {
 } from '../services/transactions';
 import { getCategories } from '../services/categories';
 import TransactionModal from '../components/TransactionModal';
+import { showToast, getErrorMessage } from '../lib/toast';
 
 function getCategoryIcon(name) {
   const map = {
@@ -66,9 +67,14 @@ function Transactions() {
         await createTransaction(data);
       }
       setModalOpen(false);
+      showToast(
+        editingTransaction ? 'Transação atualizada.' : 'Transação criada.',
+        'success'
+      );
       loadData();
     } catch (error) {
       console.error('Erro ao salvar transação:', error);
+      showToast(getErrorMessage(error, 'Não foi possível salvar a transação.'));
     }
   }
 
@@ -76,9 +82,11 @@ function Transactions() {
     if (!confirm('Tem certeza que deseja excluir essa transação?')) return;
     try {
       await deleteTransaction(id);
+      showToast('Transação excluída.', 'success');
       loadData();
     } catch (error) {
       console.error('Erro ao excluir transação:', error);
+      showToast(getErrorMessage(error, 'Não foi possível excluir a transação.'));
     }
   }
 
