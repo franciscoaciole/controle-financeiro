@@ -7,6 +7,7 @@ import {
   deleteCategory,
 } from '../services/categories';
 import CategoryModal from '../components/CategoryModal';
+import { showToast, getErrorMessage } from '../lib/toast';
 
 function Categories() {
   const [categories, setCategories] = useState([]);
@@ -20,6 +21,7 @@ function Categories() {
       setCategories(data);
     } catch (error) {
       console.error('Erro ao carregar categorias:', error);
+      showToast(getErrorMessage(error, 'Não foi possível carregar as categorias.'));
     } finally {
       setLoading(false);
     }
@@ -47,20 +49,26 @@ function Categories() {
         await createCategory(data);
       }
       setModalOpen(false);
+      showToast(
+        editingCategory ? 'Categoria atualizada.' : 'Categoria criada.',
+        'success'
+      );
       loadData();
     } catch (error) {
       console.error('Erro ao salvar categoria:', error);
+      showToast(getErrorMessage(error, 'Não foi possível salvar a categoria.'));
     }
   }
 
   async function handleDelete(id) {
-    if (!confirm('Tem certeza? Isso pode afetar transações que usam essa categoria.')) return;
+    if (!confirm('Excluir esta categoria?')) return;
     try {
       await deleteCategory(id);
+      showToast('Categoria excluída.', 'success');
       loadData();
     } catch (error) {
       console.error('Erro ao excluir categoria:', error);
-      alert('Não foi possível excluir. Verifique se não há transações usando essa categoria.');
+      showToast(getErrorMessage(error, 'Não foi possível excluir a categoria.'));
     }
   }
 
