@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import AuthLayout from '../components/AuthLayout';
+
+const inputClass =
+  'w-full bg-panel-strong border border-panel-border rounded-[10px] px-4 py-3 text-base sm:text-[13px] text-text placeholder:text-muted outline-none transition focus:border-accent/60';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -27,47 +31,56 @@ function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
-        <h1 className="text-2xl font-bold text-white mb-6">Entrar</h1>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="bg-white/10 text-white placeholder-white/40 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-          <input
-            type="password"
-            placeholder="Senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="bg-white/10 text-white placeholder-white/40 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-
-          {error && <p className="text-red-400 text-sm">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg py-3 mt-2 transition disabled:opacity-50"
-          >
-            {loading ? 'Entrando...' : 'Entrar'}
-          </button>
-        </form>
-
-        <p className="text-white/50 text-sm mt-6 text-center">
-          Não tem conta?{' '}
-          <Link to="/register" className="text-blue-400 hover:underline">
+    <AuthLayout
+      title="Faça seu login"
+      subtitle="Entre para acompanhar suas finanças."
+      footer={
+        <>
+          Ainda não tem conta?{' '}
+          <Link to="/register" className="text-accent hover:underline underline-offset-4">
             Cadastre-se
           </Link>
-        </p>
-      </div>
-    </div>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[11px] text-muted">Email</span>
+          <input
+            type="email"
+            autoComplete="email"
+            placeholder="voce@exemplo.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={inputClass}
+            required
+          />
+        </label>
+
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[11px] text-muted">Senha</span>
+          <input
+            type="password"
+            autoComplete="current-password"
+            placeholder="Sua senha"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={inputClass}
+            required
+          />
+        </label>
+
+        {error && <p className="text-neg text-[12.5px]">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-accent text-bg rounded-[10px] py-3 mt-2 text-[13px] font-semibold transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? 'Entrando...' : 'Entrar'}
+        </button>
+      </form>
+    </AuthLayout>
   );
 }
 
