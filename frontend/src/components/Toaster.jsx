@@ -21,7 +21,7 @@ function Toaster() {
   return (
     <div
       aria-live="polite"
-      className="fixed z-[60] inset-x-4 bottom-4 sm:inset-x-auto sm:right-6 sm:top-6 sm:bottom-auto flex flex-col gap-2 sm:w-96 pointer-events-none"
+      className="fixed z-[60] inset-x-4 bottom-24 sm:inset-x-auto sm:right-6 sm:top-6 sm:bottom-auto flex flex-col gap-2 sm:w-96 pointer-events-none"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       {toasts.map((toast) => {
