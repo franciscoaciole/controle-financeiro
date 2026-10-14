@@ -12,10 +12,12 @@ function Layout({ children }) {
     { to: '/categories', label: 'Categorias', icon: Tags },
   ];
 
+  const initial = user?.name?.charAt(0).toUpperCase();
+
   return (
-    <div className="flex min-h-screen bg-bg text-text font-sans">
-      {/* Sidebar */}
-      <aside className="w-[232px] flex-shrink-0 border-r border-panel-border p-[28px_18px] flex flex-col">
+    <div className="flex min-h-dvh bg-bg text-text font-sans">
+      {/* Sidebar: só em telas médias pra cima */}
+      <aside className="hidden md:flex w-[232px] flex-shrink-0 border-r border-panel-border p-[28px_18px] flex-col">
         {/* Brand */}
         <div className="flex items-center gap-[9px] px-2 pb-8">
           <div className="w-[26px] h-[26px] rounded-lg bg-accent flex items-center justify-center flex-shrink-0">
@@ -55,7 +57,7 @@ function Layout({ children }) {
         <div className="mt-auto flex flex-col gap-2">
           <div className="flex items-center gap-[10px] p-[10px] rounded-xl bg-panel border border-panel-border">
             <div className="w-8 h-8 rounded-[9px] bg-[#232228] flex items-center justify-center font-display font-semibold text-xs text-accent flex-shrink-0">
-              {user?.name?.charAt(0).toUpperCase()}
+              {initial}
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold truncate">{user?.name}</p>
@@ -72,8 +74,66 @@ function Layout({ children }) {
         </div>
       </aside>
 
-      {/* Conteúdo principal */}
-      <main className="flex-1 px-10 py-7 max-w-[1280px]">{children}</main>
+      {/* Coluna principal */}
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* Barra do topo: só no celular */}
+        <header
+          className="md:hidden sticky top-0 z-40 flex items-center justify-between px-4 pb-3 bg-bg/90 backdrop-blur-xl border-b border-panel-border"
+          style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top, 0px))' }}
+        >
+          <div className="flex items-center gap-[9px]">
+            <div className="w-[26px] h-[26px] rounded-lg bg-accent flex items-center justify-center">
+              <span className="text-bg font-display font-bold text-xs">F+</span>
+            </div>
+            <span className="font-display font-semibold text-[16px] tracking-tight">
+              Finan+
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <div className="w-8 h-8 rounded-[9px] bg-panel-strong flex items-center justify-center font-display font-semibold text-xs text-accent">
+              {initial}
+            </div>
+            <button
+              onClick={logout}
+              aria-label="Sair"
+              className="w-9 h-9 flex items-center justify-center text-muted hover:text-neg transition"
+            >
+              <LogOut size={17} />
+            </button>
+          </div>
+        </header>
+
+        {/* Conteúdo principal */}
+        <main className="flex-1 min-w-0 w-full max-w-[1280px] px-4 pt-5 pb-28 md:px-10 md:py-7">
+          {children}
+        </main>
+      </div>
+
+      {/* Navegação de baixo: só no celular */}
+      <nav
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-bg/90 backdrop-blur-xl border-t border-panel-border"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
+        <div className="grid grid-cols-3">
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.to;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition ${
+                  isActive ? 'text-accent' : 'text-muted'
+                }`}
+              >
+                <Icon size={20} />
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

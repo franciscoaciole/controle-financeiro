@@ -13,6 +13,7 @@ const allowedOrigins = [
   'https://meufinanmais.vercel.app',
   'http://localhost:5173',
 ];
+if (process.env.LOCAL_ORIGIN) allowedOrigins.push(process.env.LOCAL_ORIGIN);
 
 app.use(cors({
   origin: function (origin, callback) {
