@@ -20,9 +20,7 @@ function Layout({ children }) {
       <aside className="hidden md:flex w-[232px] flex-shrink-0 border-r border-panel-border p-[28px_18px] flex-col">
         {/* Brand */}
         <div className="flex items-center gap-[9px] px-2 pb-8">
-          <div className="w-[26px] h-[26px] rounded-lg bg-accent flex items-center justify-center flex-shrink-0">
-            <span className="text-bg font-display font-bold text-xs">F+</span>
-          </div>
+          <img src="/logo.jpg" alt="Finan+" className="w-9 h-9 flex-shrink-0 mix-blend-screen" />
           <span className="font-display font-semibold text-[16.5px] tracking-tight">
             Finan+
           </span>
@@ -82,9 +80,7 @@ function Layout({ children }) {
           style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top, 0px))' }}
         >
           <div className="flex items-center gap-[9px]">
-            <div className="w-[26px] h-[26px] rounded-lg bg-accent flex items-center justify-center">
-              <span className="text-bg font-display font-bold text-xs">F+</span>
-            </div>
+            <img src="/logo.jpg" alt="Finan+" className="w-8 h-8 mix-blend-screen" />
             <span className="font-display font-semibold text-[16px] tracking-tight">
               Finan+
             </span>

@@ -1,4 +1,6 @@
-function CategoryDonut({ transactions }) {
+import { formatCurrency } from '../lib/format';
+
+function CategoryDonut({ transactions, periodLabel }) {
   const expenses = transactions.filter((t) => t.category.type === 'EXPENSE');
   const totalExpense = expenses.reduce((sum, t) => sum + Number(t.amount), 0);
 
@@ -31,16 +33,16 @@ function CategoryDonut({ transactions }) {
   const topItem = items[0];
 
   return (
-    <div className="bg-panel border border-panel-border rounded-[18px] backdrop-blur-xl p-[22px_24px] flex flex-col">
+    <div className="bg-panel border border-panel-border rounded-[18px] backdrop-blur-xl p-5 md:p-[22px_24px] flex flex-col min-w-0">
       <p className="text-[13px] font-semibold mb-0.5">Gastos por categoria</p>
       <p className="text-[11px] text-muted mb-[18px]">
-        R$ {totalExpense.toFixed(2)} total
+        {formatCurrency(totalExpense)} em {periodLabel}
       </p>
 
       {items.length === 0 ? (
-        <p className="text-muted text-sm">Nenhuma despesa ainda.</p>
+        <p className="text-muted text-sm">Nenhuma despesa em {periodLabel}.</p>
       ) : (
-        <div className="flex items-center gap-5 flex-1">
+        <div className="flex items-center gap-4 sm:gap-5 flex-1">
           <div className="relative w-[104px] h-[104px] flex-shrink-0">
             <svg width="104" height="104" viewBox="0 0 120 120" className="-rotate-90">
               <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="14" />
@@ -65,15 +67,15 @@ function CategoryDonut({ transactions }) {
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col gap-[9px]">
+          <div className="flex-1 min-w-0 flex flex-col gap-[9px]">
             {items.slice(0, 4).map((item) => (
               <div key={item.name} className="flex items-center gap-2 text-[11.5px]">
                 <span
                   className="w-[7px] h-[7px] rounded-full flex-shrink-0"
                   style={{ backgroundColor: item.color }}
                 />
-                <span className="text-[#D9D8D3]">{item.name}</span>
-                <span className="num ml-auto text-muted text-[10.5px]">
+                <span className="text-[#D9D8D3] truncate">{item.name}</span>
+                <span className="num ml-auto pl-2 text-muted text-[10.5px]">
                   {item.pct.toFixed(0)}%
                 </span>
               </div>

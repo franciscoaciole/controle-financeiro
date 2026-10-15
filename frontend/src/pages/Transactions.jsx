@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, ShoppingCart, Car, Home, Utensils, HeartPulse, Tv, Wallet } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import {
   getTransactions,
   createTransaction,
@@ -8,19 +8,8 @@ import {
 } from '../services/transactions';
 import { getCategories } from '../services/categories';
 import TransactionModal from '../components/TransactionModal';
+import TransactionList from '../components/TransactionList';
 import { showToast, getErrorMessage } from '../lib/toast';
-
-function getCategoryIcon(name) {
-  const map = {
-    Salário: Wallet,
-    Alimentação: Utensils,
-    Transporte: Car,
-    Moradia: Home,
-    Saúde: HeartPulse,
-    Entretenimento: Tv,
-  };
-  return map[name] || ShoppingCart;
-}
 
 function Transactions() {
   const [transactions, setTransactions] = useState([]);
@@ -105,7 +94,7 @@ function Transactions() {
 
   return (
     <div>
-      <div className="flex justify-between items-start mb-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start mb-6 md:mb-8">
         <div>
           <h1 className="font-display text-[22px] font-semibold tracking-tight">
             Transações
@@ -116,15 +105,15 @@ function Transactions() {
         </div>
         <button
           onClick={openCreateModal}
-          className="flex items-center gap-2 bg-accent text-bg px-4 py-2.5 rounded-[10px] text-[12.5px] font-semibold"
+          className="flex items-center justify-center gap-2 bg-accent text-bg px-4 py-3 sm:py-2.5 rounded-[10px] text-[12.5px] font-semibold w-full sm:w-auto"
         >
           <Plus size={15} />
           Nova transação
         </button>
       </div>
 
-      <div className="bg-panel border border-panel-border rounded-[18px] backdrop-blur-xl p-6">
-        <div className="flex justify-between items-center mb-4">
+      <div className="bg-panel border border-panel-border rounded-[18px] backdrop-blur-xl p-4 md:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <p className="text-[13px] font-semibold">Histórico</p>
           <div className="flex gap-1.5">
             {[
@@ -135,7 +124,7 @@ function Transactions() {
               <button
                 key={f.key}
                 onClick={() => setFilter(f.key)}
-                className={`text-[10.5px] px-2.5 py-1 rounded-full transition ${
+                className={`text-[11.5px] md:text-[10.5px] px-3 py-1.5 md:px-2.5 md:py-1 rounded-full transition ${
                   filter === f.key
                     ? 'bg-panel-strong text-text'
                     : 'text-muted hover:text-text'
@@ -150,69 +139,11 @@ function Transactions() {
         {filtered.length === 0 ? (
           <p className="text-muted text-sm py-4">Nenhuma transação encontrada.</p>
         ) : (
-          <table className="w-full text-left">
-            <thead>
-              <tr className="text-[10.5px] text-muted uppercase tracking-wide">
-                <th className="font-medium pb-3">Transação</th>
-                <th className="font-medium pb-3">Categoria</th>
-                <th className="font-medium pb-3">Data</th>
-                <th className="font-medium pb-3 text-right">Valor</th>
-                <th className="font-medium pb-3 text-right"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((t) => {
-                const Icon = getCategoryIcon(t.category.name);
-                return (
-                  <tr key={t.id} className="border-t border-panel-border group">
-                    <td className="py-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-[10px] bg-panel-strong border border-panel-border flex items-center justify-center flex-shrink-0">
-                          <Icon size={13} className="text-[#D9D8D3]" />
-                        </div>
-                        <span className="text-[12.5px] font-medium">{t.description}</span>
-                      </div>
-                    </td>
-                    <td className="py-3">
-                      <span className="text-[10.5px] text-muted bg-panel-strong border border-panel-border px-2 py-1 rounded-full">
-                        {t.category.name}
-                      </span>
-                    </td>
-                    <td className="py-3 text-[11.5px] text-muted">
-                      {new Date(t.date).toLocaleDateString('pt-BR', {
-                        day: '2-digit',
-                        month: 'short',
-                      })}
-                    </td>
-                    <td
-                      className={`py-3 text-right num text-[12.5px] font-semibold ${
-                        t.category.type === 'INCOME' ? 'text-pos' : 'text-text'
-                      }`}
-                    >
-                      {t.category.type === 'INCOME' ? '+' : '-'}R${' '}
-                      {Number(t.amount).toFixed(2)}
-                    </td>
-                    <td className="py-3 text-right">
-                      <div className="flex justify-end gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition">
-                        <button
-                          onClick={() => openEditModal(t)}
-                          className="text-muted hover:text-text"
-                        >
-                          <Pencil size={13} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(t.id)}
-                          className="text-muted hover:text-neg"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <TransactionList
+            transactions={filtered}
+            onEdit={openEditModal}
+            onDelete={handleDelete}
+          />
         )}
       </div>
 
