@@ -1,36 +1,21 @@
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { formatCurrency } from '../lib/format';
 
-function ExpenseChart({ data, currentBalance }) {
+function ExpenseChart({ data }) {
   const formattedData = data.map((item) => ({
     ...item,
     displayDate: item.date.split('-').reverse().slice(0, 2).join('/'),
   }));
 
   return (
-    <div className="bg-panel border border-panel-border rounded-[18px] backdrop-blur-xl p-6">
-      <div className="flex justify-between items-start mb-1.5">
-        <div>
-          <p className="text-[13px] font-semibold">Evolução do saldo</p>
-          <p className="num text-xl font-semibold mt-1">
-            R$ {currentBalance?.toFixed(2)}
-          </p>
-        </div>
-        <div className="flex gap-1.5">
-          {['3M', '6M', '1A'].map((label) => (
-            <span
-              key={label}
-              className={`text-[10.5px] px-2.5 py-1 rounded-full ${
-                label === '6M' ? 'bg-panel-strong text-text' : 'text-muted'
-              }`}
-            >
-              {label}
-            </span>
-          ))}
-        </div>
-      </div>
+    <div className="bg-panel border border-panel-border rounded-[18px] backdrop-blur-xl p-5 md:p-6 min-w-0">
+      <p className="text-[13px] font-semibold">Evolução do saldo</p>
+      <p className="text-[11px] text-muted mt-0.5 mb-3">
+        Saldo acumulado ao longo do tempo
+      </p>
 
-      <ResponsiveContainer width="100%" height={140}>
-        <AreaChart data={formattedData} margin={{ top: 16, right: 0, left: 0, bottom: 0 }}>
+      <ResponsiveContainer width="100%" height={180}>
+        <AreaChart data={formattedData} margin={{ top: 16, right: 4, left: 4, bottom: 0 }}>
           <defs>
             <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#EDEAE0" stopOpacity={0.2} />
@@ -38,7 +23,15 @@ function ExpenseChart({ data, currentBalance }) {
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
-          <XAxis dataKey="displayDate" stroke="#59585F" fontSize={10.5} tickLine={false} axisLine={false} />
+          <XAxis
+            dataKey="displayDate"
+            stroke="#59585F"
+            fontSize={10.5}
+            tickLine={false}
+            axisLine={false}
+            interval="preserveStartEnd"
+            minTickGap={28}
+          />
           <Tooltip
             contentStyle={{
               backgroundColor: '#15151b',
@@ -47,7 +40,7 @@ function ExpenseChart({ data, currentBalance }) {
               fontSize: '12px',
             }}
             labelStyle={{ color: '#F5F5F4' }}
-            formatter={(value) => [`R$ ${Number(value).toFixed(2)}`, 'Saldo']}
+            formatter={(value) => [formatCurrency(value), 'Saldo']}
           />
           <Area
             type="monotone"
