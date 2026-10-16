@@ -44,11 +44,16 @@ function Register() {
     try {
       await register(name.trim(), email, password);
     } catch (err) {
-      setError(
-        err.response?.status === 409
-          ? 'Este email já está cadastrado.'
-          : 'Erro ao cadastrar. Tente novamente.'
-      );
+      const status = err.response?.status;
+      if (!err.response) {
+        setError('Sem conexão com o servidor. Tente novamente.');
+      } else if (status === 409) {
+        setError('Este email já está cadastrado.');
+      } else if (status === 400 || status === 429) {
+        setError(err.response.data?.error || 'Não foi possível cadastrar.');
+      } else {
+        setError('Erro ao cadastrar. Tente novamente.');
+      }
       setLoading(false);
       return;
     }

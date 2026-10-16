@@ -3,17 +3,49 @@ const defaultCategories = require('../lib/defaultCategories');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
-async function register(req, res) {
-  const { name, email, password } = req.body;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD = 8;
+const MAX_PASSWORD = 72; // o bcrypt só considera os 72 primeiros caracteres
 
-  // Validação básica: confere se os 3 campos vieram preenchidos
-  if (!name || !email || !password) {
-    return res.status(400).json({ error: 'Nome, email e senha são obrigatórios.' });
+// Hash falso, usado quando o email não existe: assim o login leva o mesmo
+// tempo nos dois casos e ninguém descobre quais emails têm conta
+const DUMMY_HASH = bcrypt.hashSync('senha-falsa-para-comparacao', 10);
+
+function parseRegister(body) {
+  const { name, email, password } = body || {};
+
+  if (typeof name !== 'string' || typeof email !== 'string' || typeof password !== 'string') {
+    return { error: 'Nome, email e senha são obrigatórios.' };
   }
 
+  const cleanName = name.trim();
+  const cleanEmail = email.trim().toLowerCase();
+
+  if (cleanName.length < 2 || cleanName.length > 60) {
+    return { error: 'O nome deve ter entre 2 e 60 caracteres.' };
+  }
+  if (cleanEmail.length > 254 || !EMAIL_REGEX.test(cleanEmail)) {
+    return { error: 'Informe um email válido.' };
+  }
+  if (password.length < MIN_PASSWORD || password.length > MAX_PASSWORD) {
+    return { error: `A senha deve ter entre ${MIN_PASSWORD} e ${MAX_PASSWORD} caracteres.` };
+  }
+
+  return { data: { name: cleanName, email: cleanEmail, password } };
+}
+
+async function register(req, res) {
+  const parsed = parseRegister(req.body);
+  if (parsed.error) {
+    return res.status(400).json({ error: parsed.error });
+  }
+  const { name, email, password } = parsed.data;
+
   try {
-    // Verifica se já existe um usuário com esse email
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    // Verifica se já existe um usuário com esse email (sem diferenciar maiúsculas)
+    const existingUser = await prisma.user.findFirst({
+      where: { email: { equals: email, mode: 'insensitive' } },
+    });
     if (existingUser) {
       return res.status(409).json({ error: 'Este email já está cadastrado.' });
     }
@@ -45,27 +77,40 @@ async function register(req, res) {
       email: user.email,
     });
   } catch (error) {
+    // Dois cadastros simultâneos com o mesmo email: o banco recusa o segundo
+    if (error.code === 'P2002') {
+      return res.status(409).json({ error: 'Este email já está cadastrado.' });
+    }
     console.error(error);
     return res.status(500).json({ error: 'Erro ao cadastrar usuário.' });
   }
 }
-async function login(req, res) {
-  const { email, password } = req.body;
 
-  if (!email || !password) {
+async function login(req, res) {
+  const { email, password } = req.body || {};
+
+  if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
     return res.status(400).json({ error: 'Email e senha são obrigatórios.' });
   }
 
-  try {
-    // Busca o usuário pelo email
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      return res.status(401).json({ error: 'Email ou senha inválidos.' });
-    }
+  // Valores absurdos nunca são credenciais válidas
+  if (email.length > 254 || password.length > MAX_PASSWORD) {
+    return res.status(401).json({ error: 'Email ou senha inválidos.' });
+  }
 
-    // Compara a senha enviada com o hash salvo no banco
-    const passwordMatches = await bcrypt.compare(password, user.passwordHash);
-    if (!passwordMatches) {
+  try {
+    // Busca o usuário pelo email (sem diferenciar maiúsculas)
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: email.trim(), mode: 'insensitive' } },
+    });
+
+    // Compara sempre, mesmo sem usuário, pra o tempo de resposta ser igual
+    const passwordMatches = await bcrypt.compare(
+      password,
+      user ? user.passwordHash : DUMMY_HASH
+    );
+
+    if (!user || !passwordMatches) {
       return res.status(401).json({ error: 'Email ou senha inválidos.' });
     }
 
@@ -89,4 +134,5 @@ async function login(req, res) {
     return res.status(500).json({ error: 'Erro ao fazer login.' });
   }
 }
+
 module.exports = { register, login };

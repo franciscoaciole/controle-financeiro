@@ -24,7 +24,13 @@ function Login() {
       await login(email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError('Email ou senha inválidos.');
+      if (!err.response) {
+        setError('Sem conexão com o servidor. Tente novamente.');
+      } else if (err.response.status === 429) {
+        setError(err.response.data?.error || 'Muitas tentativas. Aguarde um pouco.');
+      } else {
+        setError('Email ou senha inválidos.');
+      }
     } finally {
       setLoading(false);
     }
