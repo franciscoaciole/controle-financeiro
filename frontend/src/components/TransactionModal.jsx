@@ -36,6 +36,14 @@ function suggestCategory(description, categories) {
   return null;
 }
 
+// Data de hoje pelo relógio local (não em UTC), no formato AAAA-MM-DD
+function todayLocal() {
+  const d = new Date();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${month}-${day}`;
+}
+
 // Estilo único para todos os campos do formulário
 const inputClass =
   'w-full bg-panel-strong border border-panel-border rounded-[10px] px-4 py-3 text-[13px] text-text placeholder:text-muted outline-none transition focus:border-accent/60';
@@ -59,7 +67,7 @@ function TransactionModal({ isOpen, onClose, onSave, categories, transaction }) 
     } else {
       setDescription('');
       setAmount('');
-      setDate(new Date().toISOString().split('T')[0]);
+      setDate(todayLocal());
       setCategoryId(categories[0]?.id || '');
       setCategoryTouched(false);
     }
