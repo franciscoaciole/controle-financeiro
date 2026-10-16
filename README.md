@@ -16,6 +16,20 @@ Aplicação web full stack de controle financeiro pessoal. Cadastre receitas e d
 - Filtro de transações por receitas e despesas
 - Proteção contra envio duplicado ao salvar uma transação
 
+## Telas
+
+![Dashboard](docs/dashboard.png)
+
+![Transações](docs/transacoes.png)
+
+![Categorias](docs/categorias.png)
+
+### No celular
+
+O app é responsivo e pode ser instalado na tela de início do iPhone, do iPad e do Android.
+
+<img src="docs/mobile.png" alt="Finan+ no celular" width="320" />
+
 ## Tecnologias
 
 **Frontend:** React, Vite, Tailwind CSS v4, React Router, Axios, Recharts, Lucide React
