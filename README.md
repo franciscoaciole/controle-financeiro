@@ -1,20 +1,26 @@
 # Finan+
 
-Aplicação web full stack de controle financeiro pessoal. Cadastre receitas e despesas, organize por categorias e acompanhe a evolução do saldo em um painel visual.
+Aplicação web full stack de controle financeiro pessoal. Registre receitas e despesas, organize por categorias e acompanhe a evolução do saldo em um painel visual.
 
 **Acesse:** https://meufinanmais.vercel.app
 
-> O backend roda em um plano gratuito e pode demorar até cerca de 50 segundos para responder na primeira visita depois de um período sem uso.
+> **Como testar:** crie uma conta em "Cadastre-se". Ela já nasce com as categorias padrão (Salário, Alimentação, Transporte, Moradia, Saúde, Entretenimento e Lazer).
+>
+> O backend roda em um plano gratuito, então a primeira visita depois de um período sem uso pode demorar um pouco para responder.
 
 ## Funcionalidades
 
 - Cadastro e login com autenticação JWT e senhas protegidas com hash (bcrypt)
 - Categorias padrão criadas automaticamente no cadastro de cada usuário
-- CRUD de transações e de categorias
+- CRUD de transações e de categorias, com avisos na tela de sucesso e de erro
 - Sugestão automática de categoria a partir da descrição digitada (ex.: "Uber" sugere Transporte), sem sobrescrever a escolha manual
-- Dashboard com saldo, gráfico de evolução do saldo acumulado e gráfico de gastos por categoria
+- Dashboard com saldo total, receitas e despesas do mês, gastos por categoria e gráfico de evolução do saldo com filtro de período (1M, 3M, 6M e 1A)
 - Filtro de transações por receitas e despesas
-- Proteção contra envio duplicado ao salvar uma transação
+- Valores em reais e datas tratadas como dias de calendário, sem diferença de fuso
+- Layout responsivo: barra lateral no computador e barra de navegação inferior no celular
+- Instalável na tela de início do celular e do tablet, com nome e ícone próprios (testado no iPad)
+- Tratamento de sessão expirada: o app encerra a sessão e leva o usuário de volta ao login
+- Proteção contra envio duplicado ao salvar
 
 ## Telas
 
@@ -26,7 +32,7 @@ Aplicação web full stack de controle financeiro pessoal. Cadastre receitas e d
 
 ### No celular
 
-O app é responsivo e pode ser instalado na tela de início do iPhone, do iPad e do Android.
+O app é responsivo e pode ser instalado na tela de início.
 
 <img src="docs/mobile.png" alt="Finan+ no celular" width="320" />
 
@@ -34,7 +40,7 @@ O app é responsivo e pode ser instalado na tela de início do iPhone, do iPad e
 
 **Frontend:** React, Vite, Tailwind CSS v4, React Router, Axios, Recharts, Lucide React
 
-**Backend:** Node.js, Express, Prisma ORM v7 (driver adapter `pg`), JWT (jsonwebtoken) e bcryptjs
+**Backend:** Node.js, Express, Prisma ORM v7 (driver adapter `pg`), JWT (jsonwebtoken), bcryptjs, helmet e express-rate-limit
 
 **Banco de dados:** PostgreSQL (Neon)
 
@@ -55,7 +61,24 @@ O frontend consome a API REST do backend. A autenticação usa token JWT enviado
 - **Autenticação própria:** JWT implementado manualmente, para entender o fluxo completo de registro, login e rotas protegidas.
 - **Cadastro atômico:** o usuário e as categorias padrão são criados na mesma transação do banco, então ou os dois existem ou nenhum.
 - **Sugestão de categoria local:** correspondência por palavras-chave, sem chamada externa, para resposta instantânea e custo zero.
-- **Banco serverless:** Neon, que religa sozinho após inatividade, sem necessidade de restauração manual.
+- **Datas como dia de calendário:** as datas são gravadas e exibidas em UTC, para uma transação de 11 de outubro continuar aparecendo como 11 de outubro em qualquer fuso.
+- **Banco serverless:** Neon, que religa sozinho após inatividade, sem restauração manual. A troca veio depois de o plano gratuito do provedor anterior pausar o banco por inatividade.
+- **Servidor acordado:** uma rota leve (`/ping`) é chamada periodicamente por um serviço externo para o backend gratuito não "dormir", sem consultar o banco.
+
+## Segurança
+
+- Senhas com hash (bcrypt); o login compara o hash mesmo quando o e-mail não existe, para dificultar descobrir quais e-mails têm conta
+- Validação de todos os dados no servidor, independentemente do formulário
+- Cada usuário acessa apenas os próprios dados, inclusive ao vincular transações a categorias
+- Limite de requisições por IP e limite de tentativas de login e cadastro
+- Cabeçalhos de segurança (`helmet`), tamanho máximo do corpo das requisições e CORS restrito às origens do app
+- Variáveis sensíveis fora do repositório
+
+## Limitações e próximos passos
+
+- O token fica no `localStorage` e não pode ser revogado antes de vencer (7 dias); uma melhoria seria cookie `httpOnly`
+- Não há recuperação de senha nem testes automatizados
+- Próxima funcionalidade planejada: lançamento de transações em uma linha (ex.: "uber 25,90 ontem") e importação de extrato em CSV com categorização automática
 
 ## Como rodar localmente
 
@@ -72,7 +95,7 @@ Crie o arquivo `backend/.env`:
 
 ```
 DATABASE_URL="sua-string-de-conexao-postgres"
-JWT_SECRET="uma-chave-longa-e-aleatoria"
+JWT_SECRET="uma-chave-aleatoria-com-32-caracteres-ou-mais"
 ```
 
 ```bash
