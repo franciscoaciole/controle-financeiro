@@ -99,7 +99,7 @@ function Dashboard() {
 
           <div className="grid grid-cols-2 gap-3 mt-6">
             <div className="border-t border-panel-border pt-3 min-w-0">
-              <p className="text-[10.5px] text-muted mb-1 capitalize">
+              <p className="text-[10.5px] text-muted mb-1">
                 Receitas de {monthLabel}
               </p>
               <p className="num text-[15px] md:text-[16.5px] font-semibold text-pos truncate">
@@ -107,7 +107,7 @@ function Dashboard() {
               </p>
             </div>
             <div className="border-t border-panel-border pt-3 min-w-0">
-              <p className="text-[10.5px] text-muted mb-1 capitalize">
+              <p className="text-[10.5px] text-muted mb-1">
                 Despesas de {monthLabel}
               </p>
               <p className="num text-[15px] md:text-[16.5px] font-semibold truncate">
