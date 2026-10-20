@@ -1,28 +1,5 @@
 const prisma = require('../lib/prisma');
-
-const MAX_AMOUNT = 999999999.99;
-
-// Validadores: devolvem o valor limpo, ou null se for inválido
-function parseDescription(value) {
-  if (typeof value !== 'string') return null;
-  const text = value.trim();
-  if (text.length === 0 || text.length > 100) return null;
-  return text;
-}
-
-function parseAmount(value) {
-  if (typeof value !== 'number' && typeof value !== 'string') return null;
-  if (typeof value === 'string' && value.trim() === '') return null;
-  const n = Number(value);
-  if (!Number.isFinite(n) || n <= 0 || n > MAX_AMOUNT) return null;
-  return Math.round(n * 100) / 100; // 2 casas decimais
-}
-
-function parseDate(value) {
-  if (typeof value !== 'string') return null;
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
+const { parseDescription, parseAmount, parseDate } = require('../lib/validators');
 
 async function create(req, res) {
   const { description, amount, date, categoryId } = req.body;

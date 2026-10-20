@@ -1,13 +1,5 @@
 const prisma = require('../lib/prisma');
-
-const VALID_TYPES = ['INCOME', 'EXPENSE'];
-
-function parseName(value) {
-  if (typeof value !== 'string') return null;
-  const text = value.trim();
-  if (text.length === 0 || text.length > 40) return null;
-  return text;
-}
+const { parseCategoryName: parseName, VALID_TYPES } = require('../lib/validators');
 
 async function create(req, res) {
   const { name, type } = req.body;
