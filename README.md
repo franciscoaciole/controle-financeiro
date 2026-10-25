@@ -1,5 +1,7 @@
 # Finan+
 
+![Testes](https://github.com/franciscoaciole/controle-financeiro/actions/workflows/tests.yml/badge.svg)
+
 Aplicação web full stack de controle financeiro pessoal. Registre receitas e despesas, organize por categorias e acompanhe a evolução do saldo em um painel visual.
 
 **Acesse:** https://meufinanmais.vercel.app
@@ -20,7 +22,7 @@ Aplicação web full stack de controle financeiro pessoal. Registre receitas e d
 - Layout responsivo: barra lateral no computador e barra de navegação inferior no celular
 - Instalável na tela de início do celular e do tablet, com nome e ícone próprios (testado no iPad)
 - Tratamento de sessão expirada: o app encerra a sessão e leva o usuário de volta ao login
-- Proteção contra envio duplicado ao salvar
+- Proteção contra envio repetido enquanto o salvamento está em andamento
 
 ## Telas
 
@@ -54,7 +56,7 @@ controle-financeiro/
 └── frontend/   Aplicação React (Vite)
 ```
 
-O frontend consome a API REST do backend. A autenticação usa token JWT enviado no cabeçalho `Authorization`. O CORS do backend aceita apenas o domínio do frontend em produção (e o localhost, em desenvolvimento).
+O frontend consome a API REST do backend. A autenticação usa token JWT enviado no cabeçalho `Authorization`. Para requisições com cabeçalho `Origin`, o CORS permite o domínio do frontend em produção, o localhost em desenvolvimento e uma origem adicional opcional definida por `LOCAL_ORIGIN`.
 
 ## Decisões técnicas
 
@@ -63,21 +65,21 @@ O frontend consome a API REST do backend. A autenticação usa token JWT enviado
 - **Sugestão de categoria local:** correspondência por palavras-chave, sem chamada externa, para resposta instantânea e custo zero.
 - **Datas como dia de calendário:** as datas são gravadas e exibidas em UTC, para uma transação de 11 de outubro continuar aparecendo como 11 de outubro em qualquer fuso.
 - **Banco serverless:** Neon, que religa sozinho após inatividade, sem restauração manual. A troca veio depois de o plano gratuito do provedor anterior pausar o banco por inatividade.
-- **Servidor acordado:** uma rota leve (`/ping`) é chamada periodicamente por um serviço externo para o backend gratuito não "dormir", sem consultar o banco.
+- **Backend gratuito:** a rota leve (`/ping`) está disponível para receber chamadas periódicas de um serviço externo e evitar que o servidor "durma", sem consultar o banco.
 
 ## Segurança
 
 - Senhas com hash (bcrypt); o login compara o hash mesmo quando o e-mail não existe, para dificultar descobrir quais e-mails têm conta
-- Validação de todos os dados no servidor, independentemente do formulário
+- Campos de autenticação, transações e categorias validados no servidor, independentemente do formulário usado
 - Cada usuário acessa apenas os próprios dados, inclusive ao vincular transações a categorias
 - Limite de requisições por IP e limite de tentativas de login e cadastro
-- Cabeçalhos de segurança (`helmet`), tamanho máximo do corpo das requisições e CORS restrito às origens do app
+- Cabeçalhos de segurança (`helmet`), limite de 10 KB no corpo das requisições e CORS configurado para o domínio de produção, o localhost e uma origem adicional opcional
 - Variáveis sensíveis fora do repositório
 
 ## Limitações e próximos passos
 
 - O token fica no `localStorage` e não pode ser revogado antes de vencer (7 dias); uma melhoria seria cookie `httpOnly`
-- Não há recuperação de senha nem testes automatizados
+- Não há recuperação de senha. Os testes automatizados cobrem as regras de validação do backend; ainda não cobrem as rotas da API nem o frontend
 - Próxima funcionalidade planejada: lançamento de transações em uma linha (ex.: "uber 25,90 ontem") e importação de extrato em CSV com categorização automática
 
 ## Como rodar localmente
