@@ -25,6 +25,11 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+select option {
+  background-color: #17171C;
+  color: #F5F5F4;
+}
+
 .num {
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
