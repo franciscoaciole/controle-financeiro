@@ -9,6 +9,7 @@ import {
 import { getCategories } from '../services/categories';
 import TransactionModal from '../components/TransactionModal';
 import TransactionList from '../components/TransactionList';
+import QuickEntry from '../components/QuickEntry';
 import { showToast, getErrorMessage } from '../lib/toast';
 
 function Transactions() {
@@ -19,24 +20,33 @@ function Transactions() {
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [filter, setFilter] = useState('ALL');
 
-  async function loadData() {
-    try {
-      const [transactionsData, categoriesData] = await Promise.all([
-        getTransactions(),
-        getCategories(),
-      ]);
-      setTransactions(transactionsData);
-      setCategories(categoriesData);
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const [reloadKey, setReloadKey] = useState(0);
+  const reload = () => setReloadKey((k) => k + 1);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    let ignore = false;
+
+    async function load() {
+      try {
+        const [transactionsData, categoriesData] = await Promise.all([
+          getTransactions(),
+          getCategories(),
+        ]);
+        if (ignore) return;
+        setTransactions(transactionsData);
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      ignore = true;
+    };
+  }, [reloadKey]);
 
   function openCreateModal() {
     setEditingTransaction(null);
@@ -60,10 +70,24 @@ function Transactions() {
         editingTransaction ? 'Transação atualizada.' : 'Transação criada.',
         'success'
       );
-      loadData();
+      reload();
     } catch (error) {
       console.error('Erro ao salvar transação:', error);
       showToast(getErrorMessage(error, 'Não foi possível salvar a transação.'));
+    }
+  }
+
+  // Lançamento rápido: devolve true/false para o campo saber se pode limpar o texto
+  async function handleQuickCreate(data) {
+    try {
+      await createTransaction(data);
+      showToast('Transação criada.', 'success');
+      reload();
+      return true;
+    } catch (error) {
+      console.error('Erro ao criar transação:', error);
+      showToast(getErrorMessage(error, 'Não foi possível salvar a transação.'));
+      return false;
     }
   }
 
@@ -72,7 +96,7 @@ function Transactions() {
     try {
       await deleteTransaction(id);
       showToast('Transação excluída.', 'success');
-      loadData();
+      reload();
     } catch (error) {
       console.error('Erro ao excluir transação:', error);
       showToast(getErrorMessage(error, 'Não foi possível excluir a transação.'));
@@ -111,6 +135,8 @@ function Transactions() {
           Nova transação
         </button>
       </div>
+
+      <QuickEntry categories={categories} onCreate={handleQuickCreate} />
 
       <div className="bg-panel border border-panel-border rounded-[18px] backdrop-blur-xl p-4 md:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">

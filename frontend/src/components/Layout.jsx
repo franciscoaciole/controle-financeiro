@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { LayoutDashboard, Receipt, Tags, LogOut } from 'lucide-react';
 
 function Layout({ children }) {

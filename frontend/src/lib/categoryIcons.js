@@ -1,3 +1,4 @@
+import { createElement } from 'react';
 import {
   ShoppingCart,
   Car,
@@ -24,4 +25,9 @@ const icons = {
 
 export function getCategoryIcon(name) {
   return icons[name] || ShoppingCart;
+}
+
+// Renderiza o ícone da categoria sem criar componente durante o render
+export function CategoryIcon({ name, ...props }) {
+  return createElement(getCategoryIcon(name), props);
 }

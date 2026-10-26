@@ -1,5 +1,5 @@
 import { Pencil, Trash2 } from 'lucide-react';
-import { getCategoryIcon } from '../lib/categoryIcons';
+import { CategoryIcon } from '../lib/categoryIcons';
 import { formatCurrency, formatShortDate } from '../lib/format';
 
 function Amount({ transaction, className = '' }) {
@@ -17,10 +17,9 @@ function Amount({ transaction, className = '' }) {
 }
 
 function IconBox({ name }) {
-  const Icon = getCategoryIcon(name);
   return (
     <div className="w-9 h-9 md:w-8 md:h-8 rounded-[10px] bg-panel-strong border border-panel-border flex items-center justify-center flex-shrink-0">
-      <Icon size={14} className="text-[#D9D8D3]" />
+      <CategoryIcon name={name} size={14} className="text-[#D9D8D3]" />
     </div>
   );
 }

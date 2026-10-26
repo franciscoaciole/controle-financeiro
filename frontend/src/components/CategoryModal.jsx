@@ -1,22 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X } from 'lucide-react';
 
-function CategoryModal({ isOpen, onClose, onSave, category }) {
-  const [name, setName] = useState('');
-  const [type, setType] = useState('EXPENSE');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (category) {
-      setName(category.name);
-      setType(category.type);
-    } else {
-      setName('');
-      setType('EXPENSE');
-    }
-  }, [category, isOpen]);
-
+// Formulário remontado a cada abertura (key): estado inicial vem das props.
+function CategoryModal({ isOpen, ...props }) {
   if (!isOpen) return null;
+  return <CategoryForm key={props.category?.id ?? 'new'} {...props} />;
+}
+
+function CategoryForm({ onClose, onSave, category }) {
+  const [name, setName] = useState(category?.name ?? '');
+  const [type, setType] = useState(category?.type ?? 'EXPENSE');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();

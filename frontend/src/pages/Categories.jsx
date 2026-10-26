@@ -15,21 +15,31 @@ function Categories() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
 
-  async function loadData() {
-    try {
-      const data = await getCategories();
-      setCategories(data);
-    } catch (error) {
-      console.error('Erro ao carregar categorias:', error);
-      showToast(getErrorMessage(error, 'Não foi possível carregar as categorias.'));
-    } finally {
-      setLoading(false);
-    }
-  }
+  const [reloadKey, setReloadKey] = useState(0);
+  const reload = () => setReloadKey((k) => k + 1);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    let ignore = false;
+
+    async function load() {
+      try {
+        const data = await getCategories();
+        if (!ignore) setCategories(data);
+      } catch (error) {
+        console.error('Erro ao carregar categorias:', error);
+        if (!ignore) {
+          showToast(getErrorMessage(error, 'Não foi possível carregar as categorias.'));
+        }
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      ignore = true;
+    };
+  }, [reloadKey]);
 
   function openCreateModal() {
     setEditingCategory(null);
@@ -53,7 +63,7 @@ function Categories() {
         editingCategory ? 'Categoria atualizada.' : 'Categoria criada.',
         'success'
       );
-      loadData();
+      reload();
     } catch (error) {
       console.error('Erro ao salvar categoria:', error);
       showToast(getErrorMessage(error, 'Não foi possível salvar a categoria.'));
@@ -65,7 +75,7 @@ function Categories() {
     try {
       await deleteCategory(id);
       showToast('Categoria excluída.', 'success');
-      loadData();
+      reload();
     } catch (error) {
       console.error('Erro ao excluir categoria:', error);
       showToast(getErrorMessage(error, 'Não foi possível excluir a categoria.'));

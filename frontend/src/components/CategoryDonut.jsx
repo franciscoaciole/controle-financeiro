@@ -22,12 +22,12 @@ function CategoryDonut({ transactions, periodLabel }) {
     .map((item, i) => ({ ...item, color: palette[i % palette.length] }));
 
   const circumference = 2 * Math.PI * 50;
-  let offsetAcc = 0;
-  const segments = items.map((item) => {
+  const segments = items.map((item, i) => {
     const length = (item.pct / 100) * circumference;
-    const segment = { ...item, length, offset: -offsetAcc };
-    offsetAcc += length;
-    return segment;
+    const before = items
+      .slice(0, i)
+      .reduce((sum, prev) => sum + (prev.pct / 100) * circumference, 0);
+    return { ...item, length, offset: -before };
   });
 
   const topItem = items[0];
