@@ -3,6 +3,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD = 8;
 const MAX_PASSWORD = 72; // o bcrypt só considera os 72 primeiros caracteres
 const VALID_TYPES = ['INCOME', 'EXPENSE'];
+const MAX_IMPORT = 500; // lançamentos por importação
 
 // Transações
 function parseDescription(value) {
@@ -24,6 +25,40 @@ function parseDate(value) {
   if (typeof value !== 'string') return null;
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? null : d;
+}
+
+// Importação de extrato: valida o lote inteiro antes de gravar qualquer linha
+function parseImportBatch(body) {
+  const list = body && body.transactions;
+  if (!Array.isArray(list) || list.length === 0) {
+    return { error: 'Envie ao menos uma transação para importar.' };
+  }
+  if (list.length > MAX_IMPORT) {
+    return { error: `Máximo de ${MAX_IMPORT} transações por importação.` };
+  }
+
+  const data = [];
+  for (let i = 0; i < list.length; i += 1) {
+    const item = list[i] || {};
+    const line = i + 1;
+
+    const description = parseDescription(item.description);
+    if (!description) return { error: `Linha ${line}: descrição inválida (até 100 caracteres).` };
+
+    const amount = parseAmount(item.amount);
+    if (amount === null) return { error: `Linha ${line}: o valor deve ser maior que zero.` };
+
+    const date = parseDate(item.date);
+    if (!date) return { error: `Linha ${line}: data inválida.` };
+
+    if (typeof item.categoryId !== 'string' || !item.categoryId) {
+      return { error: `Linha ${line}: categoria é obrigatória.` };
+    }
+
+    data.push({ description, amount, date, categoryId: item.categoryId });
+  }
+
+  return { data };
 }
 
 // Categorias
@@ -62,9 +97,11 @@ module.exports = {
   MAX_AMOUNT,
   MAX_PASSWORD,
   VALID_TYPES,
+  MAX_IMPORT,
   parseDescription,
   parseAmount,
   parseDate,
   parseCategoryName,
+  parseImportBatch,
   parseRegister,
 };

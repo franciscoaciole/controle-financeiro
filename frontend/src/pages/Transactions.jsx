@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Upload } from 'lucide-react';
 import {
   getTransactions,
   createTransaction,
   updateTransaction,
   deleteTransaction,
+  importTransactions,
 } from '../services/transactions';
 import { getCategories } from '../services/categories';
 import TransactionModal from '../components/TransactionModal';
 import TransactionList from '../components/TransactionList';
 import QuickEntry from '../components/QuickEntry';
+import ImportStatement from '../components/ImportStatement';
 import { showToast, getErrorMessage } from '../lib/toast';
 
 function Transactions() {
@@ -17,6 +19,7 @@ function Transactions() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [filter, setFilter] = useState('ALL');
 
@@ -91,6 +94,23 @@ function Transactions() {
     }
   }
 
+  // Importação de extrato: devolve true/false para o modal saber se pode fechar
+  async function handleImport(payload) {
+    try {
+      const { imported } = await importTransactions(payload);
+      showToast(
+        `${imported} ${imported === 1 ? 'transação importada' : 'transações importadas'}.`,
+        'success'
+      );
+      reload();
+      return true;
+    } catch (error) {
+      console.error('Erro ao importar extrato:', error);
+      showToast(getErrorMessage(error, 'Não foi possível importar o extrato.'));
+      return false;
+    }
+  }
+
   async function handleDelete(id) {
     if (!confirm('Tem certeza que deseja excluir essa transação?')) return;
     try {
@@ -127,13 +147,22 @@ function Transactions() {
             Todas as suas movimentações financeiras
           </p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="flex items-center justify-center gap-2 bg-accent text-bg px-4 py-3 sm:py-2.5 rounded-[10px] text-[12.5px] font-semibold w-full sm:w-auto"
-        >
-          <Plus size={15} />
-          Nova transação
-        </button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <button
+            onClick={() => setImportOpen(true)}
+            className="flex items-center justify-center gap-2 bg-panel-strong border border-panel-border text-text px-4 py-3 sm:py-2.5 rounded-[10px] text-[12.5px] font-semibold w-full sm:w-auto transition hover:border-accent/60"
+          >
+            <Upload size={15} />
+            Importar extrato
+          </button>
+          <button
+            onClick={openCreateModal}
+            className="flex items-center justify-center gap-2 bg-accent text-bg px-4 py-3 sm:py-2.5 rounded-[10px] text-[12.5px] font-semibold w-full sm:w-auto"
+          >
+            <Plus size={15} />
+            Nova transação
+          </button>
+        </div>
       </div>
 
       <QuickEntry categories={categories} onCreate={handleQuickCreate} />
@@ -172,6 +201,14 @@ function Transactions() {
           />
         )}
       </div>
+
+      <ImportStatement
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImport={handleImport}
+        categories={categories}
+        existing={transactions}
+      />
 
       <TransactionModal
         isOpen={modalOpen}

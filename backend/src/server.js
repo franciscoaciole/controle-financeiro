@@ -40,7 +40,18 @@ app.use(cors({
   },
 }));
 
-// Corpo das requisições limitado a 10 KB: o app nunca precisa de mais
+// A importação de extrato é a única rota com corpo maior (até 500 lançamentos).
+// Fica ANTES do parser geral, com limite de tentativas próprio e teto de 150 KB.
+const importLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { error: 'Muitas importações. Aguarde alguns minutos.' },
+});
+app.use('/transactions/import', importLimiter, express.json({ limit: '150kb' }));
+
+// Corpo das demais requisições limitado a 10 KB: o app nunca precisa de mais
 app.use(express.json({ limit: '10kb' }));
 
 // Limite geral das rotas de dados: 300 requisições por IP a cada 15 minutos

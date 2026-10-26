@@ -1,5 +1,10 @@
 const prisma = require('../lib/prisma');
-const { parseDescription, parseAmount, parseDate } = require('../lib/validators');
+const {
+  parseDescription,
+  parseAmount,
+  parseDate,
+  parseImportBatch,
+} = require('../lib/validators');
 
 async function create(req, res) {
   const { description, amount, date, categoryId } = req.body;
@@ -46,6 +51,38 @@ async function create(req, res) {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Erro ao criar transação.' });
+  }
+}
+
+// Importação de extrato: tudo ou nada (se uma linha for inválida, nada é gravado)
+async function importMany(req, res) {
+  const userId = req.userId;
+
+  const parsed = parseImportBatch(req.body);
+  if (parsed.error) {
+    return res.status(400).json({ error: parsed.error });
+  }
+
+  try {
+    // todas as categorias usadas precisam existir E ser do usuário
+    const categoryIds = [...new Set(parsed.data.map((t) => t.categoryId))];
+    const owned = await prisma.category.findMany({
+      where: { id: { in: categoryIds }, userId },
+      select: { id: true },
+    });
+
+    if (owned.length !== categoryIds.length) {
+      return res.status(404).json({ error: 'Categoria não encontrada.' });
+    }
+
+    const result = await prisma.transaction.createMany({
+      data: parsed.data.map((t) => ({ ...t, userId })),
+    });
+
+    return res.status(201).json({ imported: result.count });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Erro ao importar transações.' });
   }
 }
 
@@ -211,4 +248,4 @@ async function remove(req, res) {
   }
 }
 
-module.exports = { create, list, update, remove, summary };
+module.exports = { create, importMany, list, update, remove, summary };

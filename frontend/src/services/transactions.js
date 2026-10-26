@@ -23,3 +23,8 @@ export async function updateTransaction(id, data) {
 export async function deleteTransaction(id) {
   await api.delete(`/transactions/${id}`);
 }
+
+export async function importTransactions(transactions) {
+  const response = await api.post('/transactions/import', { transactions });
+  return response.data;
+}
