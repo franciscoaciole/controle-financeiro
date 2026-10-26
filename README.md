@@ -84,7 +84,8 @@ O frontend consome a API REST do backend. A autenticação usa token JWT enviado
 ## Limitações e próximos passos
 
 - O token fica no `localStorage` e não pode ser revogado antes de vencer (7 dias); uma melhoria seria cookie `httpOnly`
-- Não há recuperação de senha. Os testes automatizados cobrem as validações e a importação no backend (com o banco simulado) e os leitores de texto do frontend (lançamento rápido e extratos); ainda não cobrem as rotas contra um banco real nem os componentes de tela
+- Não há recuperação de senha
+- Os testes automatizados cobrem as validações e a importação no backend (com o banco simulado) e os leitores de texto do frontend (lançamento rápido e extratos); ainda não cobrem as rotas contra um banco real nem os componentes de tela
 - A importação foi testada com amostras nos formatos mais comuns (OFX, CSV de conta e de fatura de cartão, CSV com débito/crédito); cada banco tem suas particularidades e alguns formatos podem precisar de ajuste
 - Próximos passos: detecção de assinaturas e gastos recorrentes, metas por categoria e resumos prontos
 
