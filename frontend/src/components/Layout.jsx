@@ -101,7 +101,7 @@ function Layout({ children }) {
         </header>
 
         {/* Conteúdo principal */}
-        <main className="flex-1 min-w-0 w-full max-w-[1280px] px-4 pt-5 pb-28 md:px-10 md:py-7">
+        <main className="flex flex-1 flex-col min-w-0 w-full max-w-[1280px] px-4 pt-5 pb-28 md:px-10 md:py-7">
           {children}
         </main>
       </div>

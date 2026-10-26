@@ -39,7 +39,7 @@ function ExpenseChart({ data }) {
   }));
 
   return (
-    <div className="bg-panel border border-panel-border rounded-[18px] backdrop-blur-xl p-5 md:p-6 min-w-0">
+    <div className="bg-panel border border-panel-border rounded-[18px] backdrop-blur-xl p-5 md:p-6 min-w-0 flex flex-1 flex-col min-h-[300px]">
       <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
         <div>
           <p className="text-[13px] font-semibold">Evolução do saldo</p>
@@ -76,43 +76,45 @@ function ExpenseChart({ data }) {
           Poucas movimentações {current.text} para desenhar o gráfico.
         </p>
       ) : (
-        <ResponsiveContainer width="100%" height={180}>
-          <AreaChart data={formattedData} margin={{ top: 16, right: 4, left: 4, bottom: 0 }}>
-            <defs>
-              <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#EDEAE0" stopOpacity={0.2} />
-                <stop offset="95%" stopColor="#EDEAE0" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
-            <XAxis
-              dataKey="displayDate"
-              stroke="#59585F"
-              fontSize={10.5}
-              tickLine={false}
-              axisLine={false}
-              interval="preserveStartEnd"
-              minTickGap={28}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: '#15151b',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '10px',
-                fontSize: '12px',
-              }}
-              labelStyle={{ color: '#F5F5F4' }}
-              formatter={(value) => [formatCurrency(value), 'Saldo']}
-            />
-            <Area
-              type="monotone"
-              dataKey="balance"
-              stroke="#EDEAE0"
-              strokeWidth={2}
-              fill="url(#colorBalance)"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        <div className="flex-1 min-h-[220px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={formattedData} margin={{ top: 16, right: 4, left: 4, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#EDEAE0" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#EDEAE0" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+              <XAxis
+                dataKey="displayDate"
+                stroke="#59585F"
+                fontSize={10.5}
+                tickLine={false}
+                axisLine={false}
+                interval="preserveStartEnd"
+                minTickGap={28}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#15151b',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '10px',
+                  fontSize: '12px',
+                }}
+                labelStyle={{ color: '#F5F5F4' }}
+                formatter={(value) => [formatCurrency(value), 'Saldo']}
+              />
+              <Area
+                type="monotone"
+                dataKey="balance"
+                stroke="#EDEAE0"
+                strokeWidth={2}
+                fill="url(#colorBalance)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       )}
     </div>
   );
