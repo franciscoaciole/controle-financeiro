@@ -67,8 +67,8 @@ function ImportForm({ onClose, onImport, categories, existing }) {
       setInverted(false);
       setOverrides({});
       setSelection({});
-    } catch (err) {
-      console.error('Erro ao ler extrato:', err);
+    } catch {
+      console.error('Erro ao ler extrato.');
       setParsed(null);
       setError('Não foi possível ler o arquivo.');
     }

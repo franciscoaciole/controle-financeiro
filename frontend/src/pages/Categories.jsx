@@ -26,7 +26,7 @@ function Categories() {
         const data = await getCategories();
         if (!ignore) setCategories(data);
       } catch (error) {
-        console.error('Erro ao carregar categorias:', error);
+        console.error('Erro ao carregar categorias.');
         if (!ignore) {
           showToast(getErrorMessage(error, 'Não foi possível carregar as categorias.'));
         }
@@ -65,7 +65,7 @@ function Categories() {
       );
       reload();
     } catch (error) {
-      console.error('Erro ao salvar categoria:', error);
+      console.error('Erro ao salvar categoria.');
       showToast(getErrorMessage(error, 'Não foi possível salvar a categoria.'));
     }
   }
@@ -77,7 +77,7 @@ function Categories() {
       showToast('Categoria excluída.', 'success');
       reload();
     } catch (error) {
-      console.error('Erro ao excluir categoria:', error);
+      console.error('Erro ao excluir categoria.');
       showToast(getErrorMessage(error, 'Não foi possível excluir a categoria.'));
     }
   }
