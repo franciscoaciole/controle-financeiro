@@ -60,7 +60,7 @@ function Dashboard() {
   const monthLabel = new Date().toLocaleDateString('pt-BR', { month: 'long' });
 
   return (
-    <div>
+    <div className="flex flex-1 flex-col">
       <div className="mb-6 md:mb-8">
         <h1 className="font-display text-[22px] font-semibold tracking-tight">
           Visão geral
@@ -88,8 +88,8 @@ function Dashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] gap-4 md:gap-[18px] mb-4 md:mb-[18px]">
-        <div className="bg-panel border border-panel-border rounded-[18px] backdrop-blur-xl p-5 md:p-[26px_28px] flex flex-col justify-between min-w-0">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.9fr] gap-4 md:gap-[18px] mb-4 md:mb-[18px]">
+        <div className="bg-panel border border-panel-border rounded-[18px] backdrop-blur-xl p-5 md:p-[26px_28px] flex flex-col justify-between min-w-0 lg:min-h-[250px]">
           <div>
             <p className="text-muted text-xs mb-2.5">Saldo total</p>
             <p className="num text-[32px] sm:text-[38px] md:text-[44px] font-semibold tracking-tight leading-none">
@@ -120,7 +120,7 @@ function Dashboard() {
         <CategoryDonut transactions={monthTransactions} periodLabel={monthLabel} />
       </div>
 
-      {summary?.dailyData?.length > 0 && <ExpenseChart data={summary.dailyData} />}
+      <ExpenseChart data={summary?.dailyData || []} />
     </div>
   );
 }
