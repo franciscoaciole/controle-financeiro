@@ -69,15 +69,18 @@ function CategoryDonut({ transactions, periodLabel }) {
 
           <div className="flex-1 min-w-0 flex flex-col gap-[9px]">
             {items.slice(0, 4).map((item) => (
-              <div key={item.name} className="flex items-center gap-2 text-[11.5px]">
-                <span
-                  className="w-[7px] h-[7px] rounded-full flex-shrink-0"
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className="text-[#D9D8D3] truncate">{item.name}</span>
-                <span className="num ml-auto pl-2 text-muted text-[10.5px]">
-                  {item.pct.toFixed(0)}%
-                </span>
+              <div key={item.name} className="min-w-0 text-[11.5px]">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-[7px] h-[7px] rounded-full flex-shrink-0"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="text-[#D9D8D3] truncate">{item.name}</span>
+                </div>
+                <div className="num flex items-center justify-between gap-2 pl-[15px] text-[10px]">
+                  <span className="text-muted">{formatCurrency(item.value)}</span>
+                  <span className="text-muted-2">{item.pct.toFixed(0)}%</span>
+                </div>
               </div>
             ))}
           </div>
