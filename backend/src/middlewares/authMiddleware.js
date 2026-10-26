@@ -17,7 +17,9 @@ function authMiddleware(req, res, next) {
   const token = parts[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      algorithms: ['HS256'],
+    });
     req.userId = decoded.userId; // injeta o userId na requisição
     return next(); // libera a passagem pra próxima função (o controller)
   } catch (error) {

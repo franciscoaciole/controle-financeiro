@@ -100,12 +100,7 @@ cd backend
 npm install
 ```
 
-Crie o arquivo `backend/.env`:
-
-```
-DATABASE_URL="sua-string-de-conexao-postgres"
-JWT_SECRET="uma-chave-aleatoria-com-32-caracteres-ou-mais"
-```
+Copie `backend/.env.example` para `backend/.env` e substitua os valores de exemplo por suas configurações locais. Gere um `JWT_SECRET` aleatório com pelo menos 32 caracteres; não use o valor de exemplo.
 
 ```bash
 npx prisma generate
@@ -122,11 +117,7 @@ cd frontend
 npm install
 ```
 
-Crie o arquivo `frontend/.env`:
-
-```
-VITE_API_URL=http://localhost:3000
-```
+Copie `frontend/.env.example` para `frontend/.env`. Ajuste `VITE_API_URL` se a API local estiver em outro endereço.
 
 ```bash
 npm run dev

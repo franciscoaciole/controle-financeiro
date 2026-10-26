@@ -47,8 +47,6 @@ function Register() {
       const status = err.response?.status;
       if (!err.response) {
         setError('Sem conexão com o servidor. Tente novamente.');
-      } else if (status === 409) {
-        setError('Este email já está cadastrado.');
       } else if (status === 400 || status === 429) {
         setError(err.response.data?.error || 'Não foi possível cadastrar.');
       } else {
@@ -58,7 +56,7 @@ function Register() {
       return;
     }
 
-    // Conta criada: entra direto, sem pedir o login de novo
+    // Entra automaticamente quando as credenciais forem válidas
     try {
       await login(email, password);
       navigate('/dashboard');

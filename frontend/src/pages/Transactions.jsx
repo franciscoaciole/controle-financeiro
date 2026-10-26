@@ -38,8 +38,8 @@ function Transactions() {
         if (ignore) return;
         setTransactions(transactionsData);
         setCategories(categoriesData);
-      } catch (error) {
-        console.error('Erro ao carregar dados:', error);
+      } catch {
+        console.error('Erro ao carregar dados.');
       } finally {
         if (!ignore) setLoading(false);
       }
@@ -75,7 +75,7 @@ function Transactions() {
       );
       reload();
     } catch (error) {
-      console.error('Erro ao salvar transação:', error);
+      console.error('Erro ao salvar transação.');
       showToast(getErrorMessage(error, 'Não foi possível salvar a transação.'));
     }
   }
@@ -88,7 +88,7 @@ function Transactions() {
       reload();
       return true;
     } catch (error) {
-      console.error('Erro ao criar transação:', error);
+      console.error('Erro ao criar transação.');
       showToast(getErrorMessage(error, 'Não foi possível salvar a transação.'));
       return false;
     }
@@ -105,7 +105,7 @@ function Transactions() {
       reload();
       return true;
     } catch (error) {
-      console.error('Erro ao importar extrato:', error);
+      console.error('Erro ao importar extrato.');
       showToast(getErrorMessage(error, 'Não foi possível importar o extrato.'));
       return false;
     }
@@ -118,7 +118,7 @@ function Transactions() {
       showToast('Transação excluída.', 'success');
       reload();
     } catch (error) {
-      console.error('Erro ao excluir transação:', error);
+      console.error('Erro ao excluir transação.');
       showToast(getErrorMessage(error, 'Não foi possível excluir a transação.'));
     }
   }

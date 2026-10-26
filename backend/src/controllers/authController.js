@@ -7,6 +7,9 @@ const { parseRegister, MAX_PASSWORD } = require('../lib/validators');
 // Hash falso, usado quando o email não existe: assim o login leva o mesmo
 // tempo nos dois casos e ninguém descobre quais emails têm conta
 const DUMMY_HASH = bcrypt.hashSync('senha-falsa-para-comparacao', 10);
+const REGISTER_RESPONSE = Object.freeze({
+  message: 'Solicitação processada. Tente entrar para continuar.',
+});
 
 async function register(req, res) {
   const parsed = parseRegister(req.body);
@@ -16,20 +19,19 @@ async function register(req, res) {
   const { name, email, password } = parsed.data;
 
   try {
+    const passwordHash = await bcrypt.hash(password, 10);
+
     // Verifica se já existe um usuário com esse email (sem diferenciar maiúsculas)
     const existingUser = await prisma.user.findFirst({
       where: { email: { equals: email, mode: 'insensitive' } },
     });
     if (existingUser) {
-      return res.status(409).json({ error: 'Este email já está cadastrado.' });
+      return res.status(200).json(REGISTER_RESPONSE);
     }
-
-    // Gera o hash da senha (nunca salvamos a senha original no banco!)
-    const passwordHash = await bcrypt.hash(password, 10);
 
     // Cria o usuário e as categorias padrão juntos:
     // se uma das duas falhar, nenhuma é salva
-    const user = await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
         data: { name, email, passwordHash },
       });
@@ -40,20 +42,13 @@ async function register(req, res) {
           userId: newUser.id,
         })),
       });
-
-      return newUser;
     });
 
-    // Retorna os dados do usuário, SEM a senha/hash
-    return res.status(201).json({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-    });
+    return res.status(200).json(REGISTER_RESPONSE);
   } catch (error) {
     // Dois cadastros simultâneos com o mesmo email: o banco recusa o segundo
     if (error.code === 'P2002') {
-      return res.status(409).json({ error: 'Este email já está cadastrado.' });
+      return res.status(200).json(REGISTER_RESPONSE);
     }
     console.error(error);
     return res.status(500).json({ error: 'Erro ao cadastrar usuário.' });
@@ -92,7 +87,7 @@ async function login(req, res) {
     const token = jwt.sign(
       { userId: user.id },
       process.env.JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '7d', algorithm: 'HS256' }
     );
 
     return res.status(200).json({

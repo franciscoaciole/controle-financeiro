@@ -31,7 +31,7 @@ function Dashboard() {
         setSummary(summaryData);
         setTransactions(transactionsData);
       } catch (error) {
-        console.error('Erro ao carregar dados:', error);
+        console.error('Erro ao carregar dados.');
         showToast(getErrorMessage(error, 'Não foi possível carregar o painel.'));
       } finally {
         setLoading(false);
