@@ -89,3 +89,39 @@ test('categorias padrão: 7 categorias, nomes únicos e só Salário é receita'
   assert.equal(incomes.length, 1);
   assert.equal(incomes[0].name, 'Salário');
 });
+
+test('parseAmount recusa valores que arredondam para zero (BUG-01)', () => {
+  assert.equal(parseAmount(0.001), null);
+  assert.equal(parseAmount(0.004), null);
+  assert.equal(parseAmount('0.001'), null);
+  assert.equal(parseAmount(0.005), 0.01); // arredonda para cima: é o menor valor válido
+  assert.equal(parseAmount(0.01), 0.01);
+});
+
+test('parseAmount recusa formatos estranhos em texto (BUG-01)', () => {
+  assert.equal(parseAmount('1e3'), null);
+  assert.equal(parseAmount('-5'), null);
+  assert.equal(parseAmount('0x10'), null);
+  assert.equal(parseAmount('Infinity'), null);
+  assert.equal(parseAmount('10,50'), null); // a API recebe ponto; a vírgula é tratada na tela
+  assert.equal(parseAmount(' 25.90 '), 25.9);
+  assert.equal(parseAmount('25.905'), 25.91);
+});
+
+test('parseDate recusa datas impossíveis e fora da faixa (BUG-02)', () => {
+  assert.equal(parseDate('2026-02-31'), null);
+  assert.equal(parseDate('2026-13-01'), null);
+  assert.equal(parseDate('2025-02-29'), null);
+  assert.equal(parseDate('1'), null);
+  assert.equal(parseDate('9999-12-31'), null);
+  assert.equal(parseDate('1999-12-31'), null);
+  assert.equal(parseDate('10/11/2026'), null);
+});
+
+test('parseDate aceita ano bissexto, limites da faixa e horário ISO', () => {
+  assert.equal(parseDate('2028-02-29').toISOString(), '2028-02-29T00:00:00.000Z');
+  assert.ok(parseDate('2000-01-01'));
+  assert.ok(parseDate('2100-12-31'));
+  assert.equal(parseDate('2026-11-05T12:30:00.000Z').toISOString(), '2026-11-05T12:30:00.000Z');
+  assert.equal(parseDate(' 2026-11-05 ').toISOString(), '2026-11-05T00:00:00.000Z');
+});
