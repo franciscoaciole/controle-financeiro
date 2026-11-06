@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { LayoutDashboard, Receipt, Tags, LogOut } from 'lucide-react';
@@ -11,6 +12,12 @@ function Layout({ children }) {
     { to: '/transactions', label: 'Transações', icon: Receipt },
     { to: '/categories', label: 'Categorias', icon: Tags },
   ];
+
+  // Título da aba por página: ajuda no histórico, nas abas e em leitores de tela
+  const pageLabel = navItems.find((item) => item.to === location.pathname)?.label;
+  useEffect(() => {
+    document.title = pageLabel ? `${pageLabel} · Finan+` : 'Finan+';
+  }, [pageLabel]);
 
   const initial = user?.name?.charAt(0).toUpperCase();
 

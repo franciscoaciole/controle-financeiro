@@ -17,6 +17,15 @@
   --font-display: 'Space Grotesk', sans-serif;
 }
 
+/* Controles nativos (barras de rolagem, calendário) no tema escuro */
+:root {
+  color-scheme: dark;
+}
+
+* {
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
 body {
   background:
     radial-gradient(1200px 600px at 15% -10%, rgba(237,234,224,0.05), transparent 60%),
