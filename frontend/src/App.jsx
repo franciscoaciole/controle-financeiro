@@ -13,9 +13,30 @@ function PrivateRoute({ children }) {
 
   if (loading) return null;
 
-  if (!user) return <Navigate to="/login" />;
+  // replace: o botão Voltar não volta para uma tela que exige login
+  if (!user) return <Navigate to="/login" replace />;
 
   return <Layout>{children}</Layout>;
+}
+
+// Login e cadastro: quem já está logado vai direto ao dashboard
+function PublicRoute({ children }) {
+  const { user, loading } = useAuth();
+
+  if (loading) return null;
+
+  if (user) return <Navigate to="/dashboard" replace />;
+
+  return children;
+}
+
+// Raiz do site e endereços desconhecidos: o destino depende de haver sessão
+function FallbackRoute() {
+  const { user, loading } = useAuth();
+
+  if (loading) return null;
+
+  return <Navigate to={user ? '/dashboard' : '/login'} replace />;
 }
 
 function App() {
@@ -23,8 +44,22 @@ function App() {
     <>
       <Toaster />
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          }
+        />
         <Route
           path="/dashboard"
           element={
@@ -49,7 +84,7 @@ function App() {
             </PrivateRoute>
           }
         />
-        <Route path="*" element={<Navigate to="/login" />} />
+        <Route path="*" element={<FallbackRoute />} />
       </Routes>
     </>
   );
