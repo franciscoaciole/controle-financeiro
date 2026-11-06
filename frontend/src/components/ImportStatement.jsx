@@ -9,6 +9,7 @@ import {
 } from '../lib/statementParser';
 import { formatCurrency } from '../lib/format';
 import { formatISODate } from '../lib/dates';
+import { plural } from '../lib/plural';
 
 const MAX_FILE_BYTES = 1024 * 1024; // 1 MB
 
@@ -135,9 +136,11 @@ function ImportForm({ onClose, onImport, categories, existing }) {
           <>
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mt-4 px-1">
               <p className="text-[11.5px] text-muted">
-                {parsed.rows.length} lançamentos lidos
-                {parsed.skipped > 0 && ` · ${parsed.skipped} linhas ignoradas`}
-                {duplicates > 0 && ` · ${duplicates} possíveis duplicados`}
+                {plural(parsed.rows.length, 'lançamento lido', 'lançamentos lidos')}
+                {parsed.skipped > 0 &&
+                  ` · ${plural(parsed.skipped, 'linha ignorada', 'linhas ignoradas')}`}
+                {duplicates > 0 &&
+                  ` · ${plural(duplicates, 'possível duplicado', 'possíveis duplicados')}`}
               </p>
               <label className="flex items-center gap-2 text-[11.5px] text-muted cursor-pointer">
                 <input
@@ -206,7 +209,7 @@ function ImportForm({ onClose, onImport, categories, existing }) {
             <div className="flex flex-col gap-2 mt-4">
               {missingCategory > 0 && (
                 <p className="text-[11.5px] text-muted px-1">
-                  {missingCategory} marcados sem categoria: escolha uma ou desmarque
+                  {plural(missingCategory, 'marcado', 'marcados')} sem categoria: escolha uma ou desmarque
                   para não importar.
                 </p>
               )}

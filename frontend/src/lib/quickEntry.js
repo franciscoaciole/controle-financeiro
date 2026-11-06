@@ -4,6 +4,8 @@ import { toISODate } from './dates.js';
 // Interpreta uma frase como "uber 25,90 ontem" e devolve os campos de uma transação.
 // Função pura: recebe o texto, as categorias do usuário e (opcional) a data de "hoje".
 
+export const MAX_DESCRIPTION = 100;
+
 const AMOUNT_RE =
   /(r\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?)(\s*(?:reais|real)\b)?/gi;
 const FULL_DATE_RE = /\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2}|\d{4}))?(?!\d)/;
@@ -111,6 +113,14 @@ export function parseQuickEntry(input, categories = [], now = new Date()) {
   const description = cleanDescription(amountResult.rest);
   if (!description) {
     return { ok: false, reason: 'description', message: 'Inclua uma descrição, ex.: uber 25,90' };
+  }
+  // mesmo limite do servidor: avisa antes de tentar salvar
+  if (description.length > MAX_DESCRIPTION) {
+    return {
+      ok: false,
+      reason: 'description',
+      message: `A descrição pode ter até ${MAX_DESCRIPTION} caracteres (está com ${description.length}).`,
+    };
   }
 
   return {

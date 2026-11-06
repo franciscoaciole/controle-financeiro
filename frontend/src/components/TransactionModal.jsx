@@ -78,6 +78,7 @@ function TransactionForm({ onClose, onSave, categories, transaction }) {
             <input
               type="text"
               placeholder="Ex.: Mercado, Uber, Netflix"
+              maxLength={100}
               value={description}
               onChange={handleDescriptionChange}
               className={inputClass}
