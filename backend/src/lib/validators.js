@@ -4,6 +4,8 @@ const MIN_PASSWORD = 8;
 const MAX_PASSWORD = 72; // o bcrypt só considera os 72 primeiros caracteres
 const VALID_TYPES = ['INCOME', 'EXPENSE'];
 const MAX_IMPORT = 500; // lançamentos por importação
+const MIN_YEAR = 2000; // faixa aceita para datas de transação
+const MAX_YEAR = 2100;
 
 // Transações
 function parseDescription(value) {
@@ -14,17 +16,52 @@ function parseDescription(value) {
 }
 
 function parseAmount(value) {
-  if (typeof value !== 'number' && typeof value !== 'string') return null;
-  if (typeof value === 'string' && value.trim() === '') return null;
-  const n = Number(value);
-  if (!Number.isFinite(n) || n <= 0 || n > MAX_AMOUNT) return null;
-  return Math.round(n * 100) / 100; // 2 casas decimais
+  let n;
+  if (typeof value === 'number') {
+    n = value;
+  } else if (typeof value === 'string') {
+    const text = value.trim();
+    // só dígitos com ponto decimal opcional: recusa "1e3", "-5", "0x10", "Infinity"
+    if (!/^\d+(\.\d+)?$/.test(text)) return null;
+    n = Number(text);
+  } else {
+    return null;
+  }
+  if (!Number.isFinite(n)) return null;
+
+  // arredonda ANTES de checar o mínimo: 0,001 viraria R$ 0,00
+  const rounded = Math.round(n * 100) / 100;
+  if (rounded < 0.01 || rounded > MAX_AMOUNT) return null;
+  return rounded;
 }
+
+// Aceita só AAAA-MM-DD (com horário ISO opcional), confere se o dia existe
+// e limita a faixa de anos. new Date() sozinho aceitava "1" (ano 2001) e
+// transformava 31/02 em 03/03 sem avisar.
+const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})(T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?(Z|[+-]\d{2}:\d{2})?)?$/;
 
 function parseDate(value) {
   if (typeof value !== 'string') return null;
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? null : d;
+  const text = value.trim();
+  const match = text.match(DATE_RE);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (year < MIN_YEAR || year > MAX_YEAR) return null;
+
+  const check = new Date(Date.UTC(year, month - 1, day));
+  if (
+    check.getUTCFullYear() !== year ||
+    check.getUTCMonth() !== month - 1 ||
+    check.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  const date = new Date(text);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 // Importação de extrato: valida o lote inteiro antes de gravar qualquer linha
