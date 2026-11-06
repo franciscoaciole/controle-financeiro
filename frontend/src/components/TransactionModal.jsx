@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { X, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
+import Modal from './Modal';
 import { suggestCategory } from '../lib/categorySuggestion';
 import { todayLocal } from '../lib/dates';
 
@@ -57,91 +58,77 @@ function TransactionForm({ onClose, onSave, categories, transaction }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center px-4 z-50">
-      <div className="w-full max-w-md bg-panel backdrop-blur-xl border border-panel-border rounded-[18px] p-6">
-        <div className="flex justify-between items-center gap-2 mb-6">
-          <h2 className="font-display text-[17px] font-semibold tracking-tight truncate pr-2">
-            {transaction ? 'Editar transação' : 'Nova transação'}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-muted hover:text-text transition"
+    <Modal title={transaction ? 'Editar transação' : 'Nova transação'} onClose={onClose}>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[11px] text-muted">Descrição</span>
+          <input
+            type="text"
+            placeholder="Ex.: Mercado, Uber, Netflix"
+            maxLength={100}
+            value={description}
+            onChange={handleDescriptionChange}
+            className={inputClass}
+            required
+          />
+        </label>
+
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[11px] text-muted">Valor (R$)</span>
+          <input
+            type="number"
+            step="0.01"
+            min="0.01"
+            placeholder="0,00"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className={`${inputClass} [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
+            required
+          />
+        </label>
+
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[11px] text-muted">Data</span>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className={`${inputClass} [color-scheme:dark]`}
+            required
+          />
+        </label>
+
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[11px] text-muted">Categoria</span>
+          <select
+            value={categoryId}
+            onChange={handleCategoryChange}
+            className={`${inputClass} [color-scheme:dark]`}
+            required
           >
-            <X size={18} />
-          </button>
-        </div>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name} ({cat.type === 'INCOME' ? 'Receita' : 'Despesa'})
+              </option>
+            ))}
+          </select>
+          {wasSuggested && (
+            <span className="flex items-center gap-1.5 text-[11px] text-pos px-1">
+              <Sparkles size={11} />
+              Categoria sugerida automaticamente
+            </span>
+          )}
+        </label>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1.5">
-            <span className="text-[11px] text-muted">Descrição</span>
-            <input
-              type="text"
-              placeholder="Ex.: Mercado, Uber, Netflix"
-              value={description}
-              onChange={handleDescriptionChange}
-              className={inputClass}
-              required
-            />
-          </label>
-
-          <label className="flex flex-col gap-1.5">
-            <span className="text-[11px] text-muted">Valor (R$)</span>
-            <input
-              type="number"
-              step="0.01"
-              min="0.01"
-              placeholder="0,00"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className={`${inputClass} [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
-              required
-            />
-          </label>
-
-          <label className="flex flex-col gap-1.5">
-            <span className="text-[11px] text-muted">Data</span>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className={`${inputClass} [color-scheme:dark]`}
-              required
-            />
-          </label>
-
-          <label className="flex flex-col gap-1.5">
-            <span className="text-[11px] text-muted">Categoria</span>
-            <select
-              value={categoryId}
-              onChange={handleCategoryChange}
-              className={`${inputClass} [color-scheme:dark]`}
-              required
-            >
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name} ({cat.type === 'INCOME' ? 'Receita' : 'Despesa'})
-                </option>
-              ))}
-            </select>
-            {wasSuggested && (
-              <span className="flex items-center gap-1.5 text-[11px] text-pos px-1">
-                <Sparkles size={11} />
-                Categoria sugerida automaticamente
-              </span>
-            )}
-          </label>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="bg-accent text-bg rounded-[10px] py-3 mt-2 text-[13px] font-semibold transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? 'Salvando...' : 'Salvar'}
-          </button>
-        </form>
-      </div>
-    </div>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="bg-accent text-bg rounded-[10px] py-3 mt-2 text-[13px] font-semibold transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? 'Salvando...' : 'Salvar'}
+        </button>
+      </form>
+    </Modal>
   );
 }
 

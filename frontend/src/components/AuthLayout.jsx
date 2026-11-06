@@ -1,4 +1,10 @@
+import { useEffect } from 'react';
+
 function AuthLayout({ title, subtitle, children, footer }) {
+  useEffect(() => {
+    document.title = `${title} · Finan+`;
+  }, [title]);
+
   return (
     <div className="min-h-dvh bg-bg text-text grid lg:grid-cols-2">
       {/* Lado do formulário */}

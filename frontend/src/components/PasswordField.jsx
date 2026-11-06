@@ -11,6 +11,7 @@ function PasswordField({
   placeholder,
   autoComplete,
   minLength,
+  maxLength,
 }) {
   const [visible, setVisible] = useState(false);
 
@@ -25,6 +26,7 @@ function PasswordField({
           value={value}
           onChange={onChange}
           minLength={minLength}
+          maxLength={maxLength}
           className={inputClass}
           required
         />

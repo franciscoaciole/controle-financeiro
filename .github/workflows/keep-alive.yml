@@ -1,0 +1,19 @@
+name: Keep-alive
+
+# O plano gratuito do Render desliga o backend após 15 min sem uso, e a
+# primeira requisição depois disso leva vários segundos. Este agendamento
+# chama a rota leve /ping (não consulta o banco) a cada 10 minutos.
+# Obs.: o GitHub pode atrasar execuções agendadas e as desativa após
+# 60 dias sem atividade no repositório.
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Acordar o backend no Render
+        run: curl --fail --silent --show-error --max-time 90 --retry 2 https://controle-financeiro-1kk5.onrender.com/ping

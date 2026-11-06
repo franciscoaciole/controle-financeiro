@@ -81,7 +81,9 @@ function QuickEntry({ categories, onCreate }) {
 
       {entry && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 px-1 text-[12px]">
-          <span className="font-semibold text-text">{entry.description}</span>
+          <span className="font-semibold text-text min-w-0 max-w-full wrap-anywhere">
+            {entry.description}
+          </span>
           <span
             className={`num font-semibold ${
               category?.type === 'INCOME' ? 'text-pos' : 'text-text'

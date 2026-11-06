@@ -99,3 +99,11 @@ test('erros: vazio, sem valor, sem descrição, valor zero', () => {
   assert.equal(parse('25,90 ontem').reason, 'description');
   assert.equal(parse('uber 0').reason, 'amount');
 });
+
+test('descrição acima de 100 caracteres é recusada antes de salvar (BUG-05)', () => {
+  const r = parse(`${'a'.repeat(101)} 5`);
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, 'description');
+  assert.match(r.message, /até 100 caracteres \(está com 101\)/);
+  assert.equal(parse(`${'a'.repeat(100)} 5`).ok, true);
+});
