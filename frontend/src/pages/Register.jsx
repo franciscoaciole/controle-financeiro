@@ -16,7 +16,8 @@ function getStrength(password) {
   if (/[A-Z]/.test(password) && /[a-z]/.test(password)) points++;
   if (/\d/.test(password) || /[^A-Za-z0-9]/.test(password)) points++;
 
-  const score = password.length < 6 ? 1 : Math.max(points, 1);
+  // abaixo de 8 o servidor recusa: sempre "Fraca"
+  const score = password.length < 8 ? 1 : Math.max(points, 1);
   return { score, label: ['Fraca', 'Média', 'Forte'][score - 1] };
 }
 
@@ -110,9 +111,10 @@ function Register() {
           <PasswordField
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Mínimo de 6 caracteres"
+            placeholder="Mínimo de 8 caracteres"
             autoComplete="new-password"
-            minLength={6}
+            minLength={8}
+            maxLength={72}
           />
 
           {password ? (
