@@ -13,8 +13,10 @@ const tx = (amount, name, type, date = '2026-10-10') => ({
   category: { name, type },
 });
 
-const summary = (current, previous = [], month = '2026-10') =>
-  buildSummaryText(month, buildMonthStats(current, previous));
+// O texto usa espaço não separável depois de "R$"; aqui ele vira espaço comum
+// só para os textos esperados ficarem legíveis.
+const summary = (current, previous = [], month = '2026-10', options) =>
+  buildSummaryText(month, buildMonthStats(current, previous), options).replace(/\u00a0/g, ' ');
 
 test('parseMonth aceita AAAA-MM e calcula o intervalo em UTC', () => {
   const range = parseMonth('2026-01');
@@ -109,4 +111,40 @@ test('mês só com despesas e janeiro compara com dezembro', () => {
 test('o resumo usa só números agregados, nunca descrições', () => {
   const current = [{ ...tx(50, 'Transporte', 'EXPENSE'), description: 'uber casa da Ana' }];
   assert.ok(!summary(current).includes('uber'));
+});
+
+test('o valor em reais não quebra entre "R$" e o número', () => {
+  const raw = buildSummaryText('2026-10', buildMonthStats([tx(101.9, 'Lazer', 'EXPENSE')], []));
+  assert.ok(raw.includes('R$\u00a0101,90'));
+  assert.ok(!raw.includes('R$ 101,90'));
+});
+
+test('mês em andamento fala em "até agora" e não compara com o mês anterior', () => {
+  const text = summary(
+    [tx(3000, 'Salário', 'INCOME', '2026-11-05'), tx(50, 'Lazer', 'EXPENSE', '2026-11-06')],
+    [tx(2000, 'Lazer', 'EXPENSE', '2026-10-06')],
+    '2026-11',
+    { ongoing: true },
+  );
+  const [overview, highlights, suggestion] = text.split('\n\n');
+
+  assert.equal(
+    overview,
+    'Até agora, em novembro, você recebeu R$ 3.000,00 e gastou R$ 50,00. Por enquanto sobram R$ 2.950,00, ou 98,3% da renda.',
+  );
+  assert.match(highlights, /^O maior gasto até agora é Lazer/);
+  assert.match(highlights, /aparece quando o mês terminar/);
+  assert.ok(!text.includes('caíram'));
+  assert.match(suggestion, /^Até o fim do mês/);
+});
+
+test('sem receitas registradas não fala em "fechar no azul"', () => {
+  const text = summary([tx(61.12, 'Entretenimento', 'EXPENSE', '2026-11-03')], [], '2026-11', { ongoing: true });
+  assert.ok(!text.includes('no azul'));
+  assert.match(text, /registre também suas receitas/);
+});
+
+test('mês no vermelho com receita continua sugerindo fechar no azul', () => {
+  const text = summary([tx(1000, 'Salário', 'INCOME'), tx(1500, 'Moradia', 'EXPENSE')]);
+  assert.match(text, /para fechar no azul\.$/);
 });
