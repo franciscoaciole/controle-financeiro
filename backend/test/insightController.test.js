@@ -21,6 +21,23 @@ const fakePrisma = {
 const prismaPath = require.resolve('../src/lib/prisma');
 require.cache[prismaPath] = { id: prismaPath, filename: prismaPath, loaded: true, exports: fakePrisma };
 
+// IA simulada: por padrão "falha" (null), como acontece sem GEMINI_API_KEY.
+// Assim os testes nunca chamam a rede, mesmo com a chave no .env.
+let aiResult = null;
+let aiInput = null;
+const aiPath = require.resolve('../src/lib/aiSummary');
+require.cache[aiPath] = {
+  id: aiPath,
+  filename: aiPath,
+  loaded: true,
+  exports: {
+    generateAiSummary: async (input) => {
+      aiInput = input;
+      return aiResult;
+    },
+  },
+};
+
 const { monthInsight } = require('../src/controllers/insightController');
 
 function fakeRes() {
@@ -66,8 +83,23 @@ test('busca só as transações do próprio usuário e devolve o resumo', async 
   assert.equal(res.body.stats.expense, 400); // setembro não entra no total de outubro
   assert.equal(res.body.stats.previousMonth.expense, 300);
   assert.equal(res.body.ongoing, false);
+  assert.equal(res.body.source, 'local');
   assert.match(res.body.summary.replace(/\u00a0/g, ' '), /Em outubro você recebeu R\$ 3\.000,00 e gastou R\$ 400,00\./);
   assert.equal(res.body.summary.split('\n\n').length, 3);
+});
+
+test('com resposta da IA, devolve o texto dela e envia só totais', async () => {
+  rows = [tx(3000, 'INCOME', '2026-10-05'), tx(400, 'EXPENSE', '2026-10-12')];
+  aiResult = { text: 'Texto da IA.', model: 'modelo-teste' };
+  const res = await call({ month: '2026-10' });
+  aiResult = null;
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.source, 'ai');
+  assert.equal(res.body.summary, 'Texto da IA.');
+  assert.equal(aiInput.monthLabel, 'outubro de 2026');
+  // O que vai para a IA não tem descrições nem dados do usuário
+  assert.doesNotMatch(JSON.stringify(aiInput), /user-1|description/);
 });
 
 test('erro no banco vira 500 com mensagem genérica', async () => {

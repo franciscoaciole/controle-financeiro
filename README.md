@@ -19,7 +19,7 @@ Aplicação web full stack de controle financeiro pessoal. Registre receitas e d
 - Dashboard com saldo total, receitas e despesas do mês, gastos por categoria e gráfico de evolução do saldo com filtro de período (1M, 3M, 6M e 1A)
 - Lançamento rápido em uma linha (ex.: "uber 25,90 ontem"): o app entende valor, data e categoria e mostra uma prévia antes de salvar
 - Importação de extrato bancário em OFX ou CSV, com prévia, categorização automática, detecção de lançamentos possivelmente duplicados e importação em lote
-- Resumo do mês: no Dashboard, o usuário escolhe um mês e recebe um texto curto com o panorama de receitas e despesas, a categoria que mais pesou, a comparação com o mês anterior e uma sugestão prática
+- Resumo do mês com IA: no Dashboard, o usuário escolhe um mês e recebe um texto curto, redigido por um LLM (Google Gemini), com o panorama de receitas e despesas, a categoria que mais pesou, a comparação com o mês anterior e uma sugestão prática
 - Tela de Transações com navegação por mês (entradas, saídas e saldo do período), lançamentos agrupados por dia com o saldo de cada dia, busca pela descrição (ignora acentos e procura em todos os meses) e filtro por receitas e despesas
 - Exclusão com "Desfazer": a transação some na hora e só é apagada no servidor depois de 5 segundos, sem janela de confirmação
 - Modo "esconder valores" (ícone de olho), que borra todos os valores em reais e fica salvo no navegador
@@ -53,6 +53,8 @@ O app é responsivo e pode ser instalado na tela de início.
 
 **Backend:** Node.js, Express, Prisma ORM v7 (driver adapter `pg`), JWT (jsonwebtoken), bcryptjs, helmet e express-rate-limit
 
+**IA:** Google Gemini API (resumo do mês), chamada direta via REST, sem SDK
+
 **Banco de dados:** PostgreSQL (Neon)
 
 **Deploy:** Vercel (frontend) e Render (backend)
@@ -74,7 +76,7 @@ O frontend consome a API REST do backend. A autenticação usa token JWT enviado
 - **Sugestão de categoria local:** correspondência por palavras-chave, sem chamada externa, para resposta instantânea e custo zero.
 - **Leitura do extrato no navegador:** o arquivo é interpretado no frontend (OFX e CSV, com detecção de separador, colunas de débito/crédito e codificação UTF-8 ou Windows-1252), então nada sai do computador do usuário antes da confirmação na prévia.
 - **Importação tudo ou nada:** o backend valida o lote inteiro (até 500 lançamentos) e confere se todas as categorias pertencem ao usuário antes de gravar; se uma linha for inválida, nada é salvo.
-- **Resumo do mês sem IA:** o servidor calcula os totais do mês (por categoria e em comparação com o mês anterior) e monta o texto com regras próprias, sem serviço externo. Assim não há custo por resumo, a resposta é instantânea, os números sempre batem com o painel e nenhum dado sai do servidor.
+- **Resumo do mês com IA e reserva local:** o servidor calcula os totais do mês e monta um texto de referência com regras próprias. Esses totais vão para o Gemini, que só redige; o modelo não faz contas. Antes de exibir, o servidor confere se todo valor em reais citado pela IA existe nos dados enviados e descarta a resposta se não existir (proteção contra números inventados). Sem chave configurada, com erro, limite de uso ou demora acima de 8 segundos, o app mostra o texto local, então o recurso nunca fica fora do ar. A tela indica de onde veio o texto.
 - **Datas como dia de calendário:** as datas são gravadas e exibidas em UTC, para uma transação de 11 de outubro continuar aparecendo como 11 de outubro em qualquer fuso.
 - **Banco serverless:** Neon, que religa sozinho após inatividade, sem restauração manual. A troca veio depois de o plano gratuito do provedor anterior pausar o banco por inatividade.
 - **Backend gratuito:** a rota leve (`/ping`) está disponível para receber chamadas periódicas de um serviço externo e evitar que o servidor "durma", sem consultar o banco.
@@ -84,6 +86,7 @@ O frontend consome a API REST do backend. A autenticação usa token JWT enviado
 - Senhas com hash (bcrypt); o login compara o hash mesmo quando o e-mail não existe, para dificultar descobrir quais e-mails têm conta
 - Campos de autenticação, transações e categorias validados no servidor, independentemente do formulário usado
 - Cada usuário acessa apenas os próprios dados, inclusive ao vincular transações a categorias
+- Para o resumo com IA, só totais agregados por categoria saem do servidor: descrições de transações, nome e e-mail do usuário não são enviados, e a chave da API fica apenas no backend
 - Limite de requisições por IP e limite de tentativas de login e cadastro
 - A importação de extrato é a única rota com corpo maior (150 KB), com limite próprio de 10 importações por IP a cada 15 minutos
 - Cabeçalhos de segurança (`helmet`), limite de 10 KB no corpo das demais requisições e CORS configurado para o domínio de produção, o localhost e uma origem adicional opcional
@@ -93,7 +96,7 @@ O frontend consome a API REST do backend. A autenticação usa token JWT enviado
 
 - O token fica no `localStorage` e não pode ser revogado antes de vencer (7 dias); uma melhoria seria cookie `httpOnly`
 - Não há recuperação de senha
-- Os testes automatizados cobrem as validações, a importação e o resumo do mês no backend (com o banco simulado) e os leitores de texto do frontend (lançamento rápido e extratos); ainda não cobrem as rotas contra um banco real nem os componentes de tela
+- Os testes automatizados cobrem as validações, a importação e o resumo do mês no backend (incluindo a integração com a IA, simulada) (com o banco simulado) e os leitores de texto do frontend (lançamento rápido e extratos); ainda não cobrem as rotas contra um banco real nem os componentes de tela
 - A importação foi testada com amostras nos formatos mais comuns (OFX, CSV de conta e de fatura de cartão, CSV com débito/crédito); cada banco tem suas particularidades e alguns formatos podem precisar de ajuste
 - Próximos passos: detecção de assinaturas e gastos recorrentes, metas por categoria e resumos prontos
 
@@ -108,7 +111,7 @@ cd backend
 npm install
 ```
 
-Copie `backend/.env.example` para `backend/.env` e substitua os valores de exemplo por suas configurações locais. Gere um `JWT_SECRET` aleatório com pelo menos 32 caracteres; não use o valor de exemplo.
+Copie `backend/.env.example` para `backend/.env` e substitua os valores de exemplo por suas configurações locais. Gere um `JWT_SECRET` aleatório com pelo menos 32 caracteres; não use o valor de exemplo. Para o resumo com IA, crie uma chave gratuita no Google AI Studio e coloque em `GEMINI_API_KEY` (opcional: sem ela, o resumo usa o texto local).
 
 ```bash
 npx prisma generate
