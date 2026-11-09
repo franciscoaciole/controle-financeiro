@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { getSummary, getTransactions } from '../services/transactions';
 import ExpenseChart from '../components/ExpenseChart';
 import CategoryDonut from '../components/CategoryDonut';
+import MonthInsight from '../components/MonthInsight';
 import { formatCurrency } from '../lib/format';
 import { showToast, getErrorMessage } from '../lib/toast';
 
@@ -121,6 +122,8 @@ function Dashboard() {
       </div>
 
       <ExpenseChart data={summary?.dailyData || []} />
+
+      <MonthInsight transactions={transactions} />
     </div>
   );
 }

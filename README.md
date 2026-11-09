@@ -19,6 +19,7 @@ Aplicação web full stack de controle financeiro pessoal. Registre receitas e d
 - Dashboard com saldo total, receitas e despesas do mês, gastos por categoria e gráfico de evolução do saldo com filtro de período (1M, 3M, 6M e 1A)
 - Lançamento rápido em uma linha (ex.: "uber 25,90 ontem"): o app entende valor, data e categoria e mostra uma prévia antes de salvar
 - Importação de extrato bancário em OFX ou CSV, com prévia, categorização automática, detecção de lançamentos possivelmente duplicados e importação em lote
+- Resumo do mês: no Dashboard, o usuário escolhe um mês e recebe um texto curto com o panorama de receitas e despesas, a categoria que mais pesou, a comparação com o mês anterior e uma sugestão prática
 - Filtro de transações por receitas e despesas
 - Valores em reais e datas tratadas como dias de calendário, sem diferença de fuso
 - Layout responsivo: barra lateral no computador e barra de navegação inferior no celular
@@ -67,6 +68,7 @@ O frontend consome a API REST do backend. A autenticação usa token JWT enviado
 - **Sugestão de categoria local:** correspondência por palavras-chave, sem chamada externa, para resposta instantânea e custo zero.
 - **Leitura do extrato no navegador:** o arquivo é interpretado no frontend (OFX e CSV, com detecção de separador, colunas de débito/crédito e codificação UTF-8 ou Windows-1252), então nada sai do computador do usuário antes da confirmação na prévia.
 - **Importação tudo ou nada:** o backend valida o lote inteiro (até 500 lançamentos) e confere se todas as categorias pertencem ao usuário antes de gravar; se uma linha for inválida, nada é salvo.
+- **Resumo do mês sem IA:** o servidor calcula os totais do mês (por categoria e em comparação com o mês anterior) e monta o texto com regras próprias, sem serviço externo. Assim não há custo por resumo, a resposta é instantânea, os números sempre batem com o painel e nenhum dado sai do servidor.
 - **Datas como dia de calendário:** as datas são gravadas e exibidas em UTC, para uma transação de 11 de outubro continuar aparecendo como 11 de outubro em qualquer fuso.
 - **Banco serverless:** Neon, que religa sozinho após inatividade, sem restauração manual. A troca veio depois de o plano gratuito do provedor anterior pausar o banco por inatividade.
 - **Backend gratuito:** a rota leve (`/ping`) está disponível para receber chamadas periódicas de um serviço externo e evitar que o servidor "durma", sem consultar o banco.
@@ -85,7 +87,7 @@ O frontend consome a API REST do backend. A autenticação usa token JWT enviado
 
 - O token fica no `localStorage` e não pode ser revogado antes de vencer (7 dias); uma melhoria seria cookie `httpOnly`
 - Não há recuperação de senha
-- Os testes automatizados cobrem as validações e a importação no backend (com o banco simulado) e os leitores de texto do frontend (lançamento rápido e extratos); ainda não cobrem as rotas contra um banco real nem os componentes de tela
+- Os testes automatizados cobrem as validações, a importação e o resumo do mês no backend (com o banco simulado) e os leitores de texto do frontend (lançamento rápido e extratos); ainda não cobrem as rotas contra um banco real nem os componentes de tela
 - A importação foi testada com amostras nos formatos mais comuns (OFX, CSV de conta e de fatura de cartão, CSV com débito/crédito); cada banco tem suas particularidades e alguns formatos podem precisar de ajuste
 - Próximos passos: detecção de assinaturas e gastos recorrentes, metas por categoria e resumos prontos
 
