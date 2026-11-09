@@ -1,5 +1,9 @@
 const prisma = require('../lib/prisma');
-const { parseCategoryName: parseName, VALID_TYPES } = require('../lib/validators');
+const {
+  parseCategoryName: parseName,
+  VALID_TYPES,
+  MAX_CATEGORIES_PER_USER,
+} = require('../lib/validators');
 
 async function create(req, res) {
   const { name, type } = req.body;
@@ -15,6 +19,13 @@ async function create(req, res) {
   }
 
   try {
+    const current = await prisma.category.count({ where: { userId } });
+    if (current >= MAX_CATEGORIES_PER_USER) {
+      return res.status(409).json({
+        error: `Limite de ${MAX_CATEGORIES_PER_USER} categorias por conta atingido.`,
+      });
+    }
+
     const category = await prisma.category.create({
       data: { name: parsedName, type, userId },
     });

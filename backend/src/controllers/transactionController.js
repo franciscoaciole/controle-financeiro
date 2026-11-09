@@ -4,7 +4,21 @@ const {
   parseAmount,
   parseDate,
   parseImportBatch,
+  MAX_TRANSACTIONS_PER_USER,
+  AMOUNT_RANGE_TEXT,
 } = require('../lib/validators');
+
+const AMOUNT_ERROR = `O valor deve estar entre ${AMOUNT_RANGE_TEXT}.`;
+
+const LIMIT_ERROR = {
+  error: `Limite de ${MAX_TRANSACTIONS_PER_USER.toLocaleString('pt-BR')} transações por conta atingido. Exclua lançamentos antigos para continuar.`,
+};
+
+// true se a conta ainda cabe mais `adding` transações
+async function hasRoomFor(userId, adding) {
+  const current = await prisma.transaction.count({ where: { userId } });
+  return current + adding <= MAX_TRANSACTIONS_PER_USER;
+}
 
 async function create(req, res) {
   const { description, amount, date, categoryId } = req.body;
@@ -18,7 +32,7 @@ async function create(req, res) {
     return res.status(400).json({ error: 'Informe uma descrição de até 100 caracteres.' });
   }
   if (parsedAmount === null) {
-    return res.status(400).json({ error: 'O valor deve ser um número maior que zero.' });
+    return res.status(400).json({ error: AMOUNT_ERROR });
   }
   if (!parsedDate) {
     return res.status(400).json({ error: 'Data inválida.' });
@@ -35,6 +49,10 @@ async function create(req, res) {
 
     if (!category) {
       return res.status(404).json({ error: 'Categoria não encontrada.' });
+    }
+
+    if (!(await hasRoomFor(userId, 1))) {
+      return res.status(409).json(LIMIT_ERROR);
     }
 
     const transaction = await prisma.transaction.create({
@@ -73,6 +91,10 @@ async function importMany(req, res) {
 
     if (owned.length !== categoryIds.length) {
       return res.status(404).json({ error: 'Categoria não encontrada.' });
+    }
+
+    if (!(await hasRoomFor(userId, parsed.data.length))) {
+      return res.status(409).json(LIMIT_ERROR);
     }
 
     const result = await prisma.transaction.createMany({
@@ -178,7 +200,7 @@ async function update(req, res) {
   if (amount !== undefined) {
     const parsed = parseAmount(amount);
     if (parsed === null) {
-      return res.status(400).json({ error: 'O valor deve ser um número maior que zero.' });
+      return res.status(400).json({ error: AMOUNT_ERROR });
     }
     data.amount = parsed;
   }
