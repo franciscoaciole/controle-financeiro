@@ -6,6 +6,7 @@ const { rateLimit } = require('express-rate-limit');
 const authRoutes = require('./routes/authRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
+const insightRoutes = require('./routes/insightRoutes');
 const prisma = require('./lib/prisma');
 
 // Sem a chave dos tokens o login nem funciona: melhor falhar já na partida
@@ -15,6 +16,10 @@ if (!process.env.JWT_SECRET) {
 }
 if (process.env.JWT_SECRET.length < 32) {
   console.warn('AVISO: JWT_SECRET tem menos de 32 caracteres. Use uma chave mais longa e aleatória.');
+}
+// O app funciona sem a chave da IA; só o resumo do mês fica desligado
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.warn('AVISO: ANTHROPIC_API_KEY não definida. O resumo do mês com IA ficará indisponível.');
 }
 
 const app = express();
@@ -67,6 +72,7 @@ const apiLimiter = rateLimit({
 app.use('/auth', authRoutes);
 app.use('/categories', apiLimiter, categoryRoutes);
 app.use('/transactions', apiLimiter, transactionRoutes);
+app.use('/insights', apiLimiter, insightRoutes);
 
 // Rota leve só para manter o servidor acordado (não toca no banco)
 app.get('/ping', (req, res) => {
