@@ -4,6 +4,9 @@ import { getMonthInsight } from '../services/insights';
 import { monthsWithTransactions, formatMonthKey } from '../lib/months';
 import { getErrorMessage } from '../lib/toast';
 
+// "outubro de 2026" -> "Outubro de 2026" (o CSS capitalize deixaria "De" maiúsculo)
+const capitalizeFirst = (text) => text.charAt(0).toUpperCase() + text.slice(1);
+
 function MonthInsight({ transactions }) {
   const months = monthsWithTransactions(transactions);
   const [month, setMonth] = useState(months[0] || '');
@@ -61,11 +64,11 @@ function MonthInsight({ transactions }) {
               setError('');
             }}
             disabled={isLoading}
-            className="bg-panel-strong border border-panel-border rounded-[10px] px-3 py-2 text-[12.5px] capitalize focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:opacity-60"
+            className="bg-panel-strong border border-panel-border rounded-[10px] px-3 py-2 text-[12.5px] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:opacity-60"
           >
             {months.map((key) => (
               <option key={key} value={key}>
-                {formatMonthKey(key)}
+                {capitalizeFirst(formatMonthKey(key))}
               </option>
             ))}
           </select>
