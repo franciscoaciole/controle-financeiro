@@ -26,3 +26,21 @@ test('respeita o limite de meses', () => {
 test('formata o mês em português', () => {
   assert.equal(formatMonthKey('2026-10'), 'outubro de 2026');
 });
+
+import { shiftMonth, isValidMonthKey, monthKeyOf, currentMonthKey } from '../src/lib/months.js';
+
+test('shiftMonth atravessa a virada do ano', () => {
+  assert.equal(shiftMonth('2026-01', -1), '2025-12');
+  assert.equal(shiftMonth('2026-12', 1), '2027-01');
+});
+
+test('valida a chave de mês vinda da URL', () => {
+  assert.equal(isValidMonthKey('2026-10'), true);
+  assert.equal(isValidMonthKey('2026-13'), false);
+  assert.equal(isValidMonthKey('<script>'), false);
+});
+
+test('monthKeyOf usa UTC e currentMonthKey usa o relógio local', () => {
+  assert.equal(monthKeyOf('2026-11-01T00:00:00.000Z'), '2026-11');
+  assert.equal(currentMonthKey(new Date(2026, 0, 31, 23, 0)), '2026-01');
+});

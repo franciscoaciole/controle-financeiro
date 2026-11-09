@@ -1,20 +1,40 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CircleAlert, CircleCheck, X } from 'lucide-react';
 import { subscribe } from '../lib/toast';
 
 function Toaster() {
   const [toasts, setToasts] = useState([]);
+  const timers = useRef(new Map());
 
   useEffect(() => {
-    return subscribe((toast) => {
+    const currentTimers = timers.current;
+
+    function remove(id) {
+      clearTimeout(currentTimers.get(id));
+      currentTimers.delete(id);
+      setToasts((current) => current.filter((t) => t.id !== id));
+    }
+
+    const unsubscribe = subscribe((event) => {
+      if (event.kind === 'dismiss') {
+        remove(event.id);
+        return;
+      }
+      const { toast } = event;
       setToasts((current) => [...current.slice(-2), toast]); // no máximo 3 na tela
-      setTimeout(() => {
-        setToasts((current) => current.filter((t) => t.id !== toast.id));
-      }, 4500);
+      currentTimers.set(toast.id, setTimeout(() => remove(toast.id), toast.duration));
     });
+
+    return () => {
+      unsubscribe();
+      currentTimers.forEach(clearTimeout);
+      currentTimers.clear();
+    };
   }, []);
 
   function dismiss(id) {
+    clearTimeout(timers.current.get(id));
+    timers.current.delete(id);
     setToasts((current) => current.filter((t) => t.id !== id));
   }
 
@@ -30,16 +50,28 @@ function Toaster() {
           <div
             key={toast.id}
             role={isError ? 'alert' : 'status'}
-            className={`pointer-events-auto flex items-start gap-3 bg-panel backdrop-blur-xl border rounded-[14px] px-4 py-3 shadow-lg ${
+            className={`toast-enter relative pointer-events-auto flex items-center gap-3 bg-[#141419]/95 backdrop-blur-xl border rounded-[14px] px-4 py-3 shadow-lg ${
               isError ? 'border-neg/40' : 'border-pos/40'
             }`}
           >
             {isError ? (
-              <CircleAlert size={17} className="text-neg mt-0.5 shrink-0" />
+              <CircleAlert size={17} className="text-neg shrink-0" />
             ) : (
-              <CircleCheck size={17} className="text-pos mt-0.5 shrink-0" />
+              <CircleCheck size={17} className="text-pos shrink-0" />
             )}
             <p className="text-[13px] text-text flex-1">{toast.message}</p>
+            {toast.action && (
+              <button
+                type="button"
+                onClick={() => {
+                  toast.action.onClick();
+                  dismiss(toast.id);
+                }}
+                className="text-[12.5px] font-semibold text-accent px-2 py-1 -my-1 rounded-md hover:bg-panel-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 shrink-0"
+              >
+                {toast.action.label}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => dismiss(toast.id)}
@@ -48,6 +80,14 @@ function Toaster() {
             >
               <X size={15} />
             </button>
+            {toast.action && (
+              // Barra que esvazia: mostra quanto tempo ainda dá para desfazer
+              <span
+                aria-hidden="true"
+                className="toast-timer absolute left-3 right-3 bottom-0 h-[2px] rounded-full bg-accent/50 origin-left"
+                style={{ animationDuration: `${toast.duration}ms` }}
+              />
+            )}
           </div>
         );
       })}

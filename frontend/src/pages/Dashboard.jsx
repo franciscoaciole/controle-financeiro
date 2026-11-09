@@ -5,16 +5,15 @@ import ExpenseChart from '../components/ExpenseChart';
 import CategoryDonut from '../components/CategoryDonut';
 import MonthInsight from '../components/MonthInsight';
 import { formatCurrency } from '../lib/format';
+import { DashboardSkeleton } from '../components/Skeleton';
+import { monthKeyOf, currentMonthKey } from '../lib/months';
+import { dailyTotals } from '../lib/transactionGroups';
 import { showToast, getErrorMessage } from '../lib/toast';
 
 // As datas são guardadas como dia de calendário (UTC), então o mês
 // da transação é lido em UTC e comparado com o mês de hoje.
 function isCurrentMonth(dateValue) {
-  const now = new Date();
-  const d = new Date(dateValue);
-  return (
-    d.getUTCFullYear() === now.getFullYear() && d.getUTCMonth() === now.getMonth()
-  );
+  return monthKeyOf(dateValue) === currentMonthKey();
 }
 
 function Dashboard() {
@@ -43,11 +42,7 @@ function Dashboard() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-muted">Carregando...</p>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   const monthTransactions = transactions.filter((t) => isCurrentMonth(t.date));
@@ -93,7 +88,7 @@ function Dashboard() {
         <div className="bg-panel border border-panel-border rounded-[18px] backdrop-blur-xl p-5 md:p-[26px_28px] flex flex-col justify-between min-w-0 lg:min-h-[250px]">
           <div>
             <p className="text-muted text-xs mb-2.5">Saldo total</p>
-            <p className="num text-[32px] sm:text-[38px] md:text-[44px] font-semibold tracking-tight leading-none">
+            <p className="money num text-[32px] sm:text-[38px] md:text-[44px] font-semibold tracking-tight leading-none">
               {formatCurrency(summary?.balance)}
             </p>
           </div>
@@ -103,7 +98,7 @@ function Dashboard() {
               <p className="text-[10.5px] text-muted mb-1">
                 Receitas de {monthLabel}
               </p>
-              <p className="num text-[15px] md:text-[16.5px] font-semibold text-pos truncate">
+              <p className="money num text-[15px] md:text-[16.5px] font-semibold text-pos truncate">
                 {formatCurrency(monthIncome)}
               </p>
             </div>
@@ -111,17 +106,21 @@ function Dashboard() {
               <p className="text-[10.5px] text-muted mb-1">
                 Despesas de {monthLabel}
               </p>
-              <p className="num text-[15px] md:text-[16.5px] font-semibold truncate">
+              <p className="money num text-[15px] md:text-[16.5px] font-semibold truncate">
                 {formatCurrency(monthExpense)}
               </p>
             </div>
           </div>
         </div>
 
-        <CategoryDonut transactions={monthTransactions} periodLabel={monthLabel} />
+        <CategoryDonut
+          transactions={monthTransactions}
+          periodLabel={monthLabel}
+          monthKey={currentMonthKey()}
+        />
       </div>
 
-      <ExpenseChart data={summary?.dailyData || []} />
+      <ExpenseChart data={summary?.dailyData || []} dayTotals={dailyTotals(transactions)} />
 
       <MonthInsight transactions={transactions} />
     </div>
