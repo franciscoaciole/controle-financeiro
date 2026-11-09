@@ -1,4 +1,11 @@
-const MAX_AMOUNT = 999999999.99;
+// A coluna amount é Decimal(10, 2): no máximo 8 dígitos antes da vírgula.
+// Acima disso o banco recusa e a API respondia 500 em vez de 400.
+const MAX_AMOUNT = 99999999.99;
+const AMOUNT_RANGE_TEXT = 'R$ 0,01 e R$ 99.999.999,99';
+// Tetos por usuário: sem eles, uma conta sozinha conseguia encher o banco
+// (o plano gratuito do Neon tem 1 GB) importando 500 linhas por vez.
+const MAX_TRANSACTIONS_PER_USER = 20000;
+const MAX_CATEGORIES_PER_USER = 50;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD = 8;
 const MAX_PASSWORD = 72; // o bcrypt só considera os 72 primeiros caracteres
@@ -83,7 +90,7 @@ function parseImportBatch(body) {
     if (!description) return { error: `Linha ${line}: descrição inválida (até 100 caracteres).` };
 
     const amount = parseAmount(item.amount);
-    if (amount === null) return { error: `Linha ${line}: o valor deve ser maior que zero.` };
+    if (amount === null) return { error: `Linha ${line}: o valor deve estar entre ${AMOUNT_RANGE_TEXT}.` };
 
     const date = parseDate(item.date);
     if (!date) return { error: `Linha ${line}: data inválida.` };
@@ -132,9 +139,12 @@ function parseRegister(body) {
 
 module.exports = {
   MAX_AMOUNT,
+  AMOUNT_RANGE_TEXT,
   MAX_PASSWORD,
   VALID_TYPES,
   MAX_IMPORT,
+  MAX_TRANSACTIONS_PER_USER,
+  MAX_CATEGORIES_PER_USER,
   parseDescription,
   parseAmount,
   parseDate,

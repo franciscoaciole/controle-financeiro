@@ -10,6 +10,9 @@ on:
     - cron: '*/10 * * * *'
   workflow_dispatch:
 
+# O job só faz um curl: o token do GitHub não precisa de nenhuma permissão
+permissions: {}
+
 jobs:
   ping:
     runs-on: ubuntu-latest

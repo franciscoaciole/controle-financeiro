@@ -25,6 +25,14 @@ test('parseAmount recusa zero, negativos, texto e valores absurdos', () => {
   assert.equal(parseAmount(1e12), null);
 });
 
+test('parseAmount respeita o máximo da coluna Decimal(10, 2)', () => {
+  assert.equal(parseAmount(99999999.99), 99999999.99);
+  assert.equal(parseAmount('99999999.99'), 99999999.99);
+  // antes passava na validação e estourava no banco (HTTP 500)
+  assert.equal(parseAmount(100000000), null);
+  assert.equal(parseAmount(500000000), null);
+});
+
 test('parseDescription remove espaços e respeita o limite de 100 caracteres', () => {
   assert.equal(parseDescription('  Uber  '), 'Uber');
   assert.equal(parseDescription('a'.repeat(100)), 'a'.repeat(100));

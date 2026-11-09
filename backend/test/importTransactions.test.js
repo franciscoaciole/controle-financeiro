@@ -1,12 +1,12 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { parseImportBatch, MAX_IMPORT } = require('../src/lib/validators');
+const { parseImportBatch, MAX_IMPORT, MAX_TRANSACTIONS_PER_USER } = require('../src/lib/validators');
 
 // Troca o módulo do Prisma por um falso, antes de carregar o controller
 const prismaPath = require.resolve('../src/lib/prisma');
 const fakePrisma = {
   category: { findMany: async () => [] },
-  transaction: { createMany: async () => ({ count: 0 }) },
+  transaction: { createMany: async () => ({ count: 0 }), count: async () => 0 },
 };
 require.cache[prismaPath] = { id: prismaPath, filename: prismaPath, loaded: true, exports: fakePrisma };
 const { importMany } = require('../src/controllers/transactionController');
@@ -112,6 +112,33 @@ test('importMany devolve 400 para lote inválido sem consultar o banco', async (
   await importMany({ userId: 'u1', body: { transactions: [valid({ amount: -5 })] } }, res);
   assert.equal(res.statusCode, 400);
   assert.equal(queried, false);
+});
+
+test('importMany respeita o teto de transações por conta e não grava nada', async () => {
+  let created = false;
+  let countedFor;
+  fakePrisma.category.findMany = async ({ where }) => where.id.in.map((id) => ({ id }));
+  fakePrisma.transaction.count = async ({ where }) => {
+    countedFor = where.userId;
+    return MAX_TRANSACTIONS_PER_USER - 1; // cabe só mais uma
+  };
+  fakePrisma.transaction.createMany = async () => {
+    created = true;
+    return { count: 0 };
+  };
+
+  const res = fakeRes();
+  await importMany({ userId: 'u1', body: { transactions: [valid(), valid()] } }, res);
+  assert.equal(res.statusCode, 409);
+  assert.match(res.body.error, /Limite de 20\.000 transações/);
+  assert.equal(countedFor, 'u1');
+  assert.equal(created, false);
+
+  // exatamente no limite ainda entra
+  const ok = fakeRes();
+  await importMany({ userId: 'u1', body: { transactions: [valid()] } }, ok);
+  assert.equal(ok.statusCode, 201);
+  fakePrisma.transaction.count = async () => 0;
 });
 
 test('importMany devolve 500 se o banco falhar', async () => {
