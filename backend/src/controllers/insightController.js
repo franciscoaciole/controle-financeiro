@@ -5,6 +5,17 @@ const {
   buildMonthStats,
   buildSummaryText,
 } = require('../lib/monthSummary');
+const { generateAiSummary } = require('../lib/aiSummary');
+
+// "2026-10" -> "outubro de 2026"
+function monthLabel(monthKey) {
+  const [year, month] = monthKey.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString('pt-BR', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
 
 // POST /insights/month  { "month": "2026-10" }  (sem month = mês atual)
 async function monthInsight(req, res) {
@@ -37,9 +48,23 @@ async function monthInsight(req, res) {
     const stats = buildMonthStats(current, previous);
     // Mês atual (ou futuro) ainda não fechou: o texto fala em "até agora"
     const ongoing = monthKey >= currentMonthKey();
-    const summary = buildSummaryText(monthKey, stats, { ongoing });
+    const localSummary = buildSummaryText(monthKey, stats, { ongoing });
 
-    return res.status(200).json({ month: monthKey, ongoing, summary, stats });
+    // A IA só redige a partir dos totais; se falhar, o texto local é a resposta
+    const ai = await generateAiSummary({
+      monthLabel: monthLabel(monthKey),
+      stats,
+      localSummary,
+      ongoing,
+    });
+
+    return res.status(200).json({
+      month: monthKey,
+      ongoing,
+      summary: ai ? ai.text : localSummary,
+      source: ai ? 'ai' : 'local',
+      stats,
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Erro ao gerar o resumo do mês.' });

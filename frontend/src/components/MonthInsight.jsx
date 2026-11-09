@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileText } from 'lucide-react';
+import { FileText, Sparkles } from 'lucide-react';
 import { getMonthInsight } from '../services/insights';
 import { monthsWithTransactions, formatMonthKey } from '../lib/months';
 import { getErrorMessage } from '../lib/toast';
@@ -18,7 +18,8 @@ function MonthInsight({ transactions }) {
   if (months.length === 0) return null;
 
   const selected = months.includes(month) ? month : months[0];
-  const summary = results[selected];
+  const result = results[selected];
+  const summary = result?.summary;
   const isLoading = loadingMonth === selected;
 
   async function handleGenerate() {
@@ -26,7 +27,10 @@ function MonthInsight({ transactions }) {
     setLoadingMonth(selected);
     try {
       const data = await getMonthInsight(selected);
-      setResults((prev) => ({ ...prev, [selected]: data.summary }));
+      setResults((prev) => ({
+        ...prev,
+        [selected]: { summary: data.summary, source: data.source },
+      }));
     } catch (err) {
       setError(getErrorMessage(err, 'Não foi possível gerar o resumo.'));
     } finally {
@@ -50,7 +54,7 @@ function MonthInsight({ transactions }) {
             <h2 id="month-insight-title" className="text-[13px] font-semibold">
               Resumo do mês
             </h2>
-            <p className="text-[11px] text-muted">Um panorama escrito a partir dos seus totais</p>
+            <p className="text-[11px] text-muted">Um panorama escrito por IA a partir dos seus totais</p>
           </div>
         </div>
 
@@ -101,9 +105,16 @@ function MonthInsight({ transactions }) {
                 {p}
               </p>
             ))}
-            <p className="text-[11px] text-muted-2 pt-1">
-              Calculado a partir das transações registradas no mês.
-            </p>
+            {result.source === 'ai' ? (
+              <p className="flex items-center gap-1.5 text-[11px] text-muted-2 pt-1">
+                <Sparkles size={12} aria-hidden="true" />
+                Escrito por IA (Gemini) a partir dos totais do mês. Os valores são conferidos pelo servidor.
+              </p>
+            ) : (
+              <p className="text-[11px] text-muted-2 pt-1">
+                Calculado a partir das transações registradas no mês.
+              </p>
+            )}
           </div>
         )}
 
