@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api, { setUnauthorizedHandler } from '../services/api';
 import { showToast } from '../lib/toast';
+import { flushDeletes } from '../lib/pendingDeletes';
 import { AuthContext } from './authContextObject';
 
 function clearSession() {
@@ -72,7 +73,9 @@ export function AuthProvider({ children }) {
     await api.post('/auth/register', { name, email, password });
   }
 
-  function logout() {
+  async function logout() {
+    // Exclusões no prazo do "Desfazer" vão antes, enquanto o token ainda existe
+    await flushDeletes();
     clearSession();
     setUser(null);
   }

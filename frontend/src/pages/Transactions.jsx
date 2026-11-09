@@ -6,8 +6,15 @@ import {
   createTransaction,
   updateTransaction,
   deleteTransaction,
+  deleteTransactionOnUnload,
   importTransactions,
 } from '../services/transactions';
+import {
+  scheduleDelete,
+  cancelDelete,
+  isDeletePending,
+  flushDeletes,
+} from '../lib/pendingDeletes';
 import { getCategories } from '../services/categories';
 import TransactionModal from '../components/TransactionModal';
 import TransactionList from '../components/TransactionList';
@@ -66,8 +73,8 @@ function Transactions() {
   const quickRef = useRef(null);
   const searchRef = useRef(null);
 
-  // Exclusões aguardando o prazo do "Desfazer": id -> { timer, toastId }
-  const pendingDeletes = useRef(new Map());
+  // Avisos de "Desfazer" abertos nesta tela: id da transação -> id do aviso
+  const undoToasts = useRef(new Map());
 
   const [reloadKey, setReloadKey] = useState(0);
   const reload = () => setReloadKey((k) => k + 1);
@@ -83,7 +90,7 @@ function Transactions() {
         ]);
         if (ignore) return;
         // Quem está no prazo do "Desfazer" continua escondido mesmo após recarregar
-        const visible = transactionsData.filter((t) => !pendingDeletes.current.has(t.id));
+        const visible = transactionsData.filter((t) => !isDeletePending(t.id));
         setTransactions(visible);
         setCategories(categoriesData);
         setMonth((m) => m ?? initialMonth(searchParams.get('month'), visible));
@@ -104,17 +111,13 @@ function Transactions() {
   }, [reloadKey]);
 
   // Ao sair da tela, as exclusões pendentes são enviadas na hora
+  // (ao sair da conta, o logout já enviou antes de apagar o token)
   useEffect(() => {
-    const pending = pendingDeletes.current;
+    const toasts = undoToasts.current;
     return () => {
-      pending.forEach(({ timer, toastId }, id) => {
-        clearTimeout(timer);
-        dismissToast(toastId); // o "Desfazer" não vale mais fora desta tela
-        deleteTransaction(id).catch(() => {
-          showToast('Uma exclusão não foi concluída. Confira a lista de transações.');
-        });
-      });
-      pending.clear();
+      toasts.forEach((toastId) => dismissToast(toastId)); // o "Desfazer" não vale mais fora desta tela
+      toasts.clear();
+      flushDeletes();
     };
   }, []);
 
@@ -209,32 +212,35 @@ function Transactions() {
 
       setTransactions((list) => list.filter((t) => t.id !== id));
 
-      const commit = async () => {
-        pendingDeletes.current.delete(id);
-        try {
-          await deleteTransaction(id);
-        } catch (error) {
+      scheduleDelete(id, {
+        delay: UNDO_MS,
+        remove: async (deleteId) => {
+          // Enviou: o "Desfazer" sai da tela (inclusive ao sair da conta)
+          dismissToast(undoToasts.current.get(deleteId));
+          undoToasts.current.delete(deleteId);
+          await deleteTransaction(deleteId);
+        },
+        removeOnUnload: deleteTransactionOnUnload,
+        onFail: (error) => {
           setTransactions((list) => restoreTransaction(list, transaction));
           showToast(getErrorMessage(error, 'Não foi possível excluir a transação.'));
-        }
-      };
-
-      const timer = setTimeout(commit, UNDO_MS);
+        },
+      });
 
       const toastId = showToast('Transação excluída.', 'success', {
         duration: UNDO_MS,
         action: {
           label: 'Desfazer',
           onClick: () => {
-            const pending = pendingDeletes.current.get(id);
-            if (!pending) return;
-            clearTimeout(pending.timer);
-            pendingDeletes.current.delete(id);
-            setTransactions((list) => restoreTransaction(list, transaction));
+            undoToasts.current.delete(id);
+            // Se o envio já começou, não há mais o que desfazer
+            if (cancelDelete(id)) {
+              setTransactions((list) => restoreTransaction(list, transaction));
+            }
           },
         },
       });
-      pendingDeletes.current.set(id, { timer, toastId });
+      undoToasts.current.set(id, toastId);
     },
     [transactions]
   );
