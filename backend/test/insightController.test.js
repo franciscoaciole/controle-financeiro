@@ -65,7 +65,8 @@ test('busca só as transações do próprio usuário e devolve o resumo', async 
   assert.equal(res.statusCode, 200);
   assert.equal(res.body.stats.expense, 400); // setembro não entra no total de outubro
   assert.equal(res.body.stats.previousMonth.expense, 300);
-  assert.match(res.body.summary, /Em outubro você recebeu R\$ 3\.000,00 e gastou R\$ 400,00\./);
+  assert.equal(res.body.ongoing, false);
+  assert.match(res.body.summary.replace(/\u00a0/g, ' '), /Em outubro você recebeu R\$ 3\.000,00 e gastou R\$ 400,00\./);
   assert.equal(res.body.summary.split('\n\n').length, 3);
 });
 

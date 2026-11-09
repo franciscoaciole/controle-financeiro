@@ -35,9 +35,11 @@ async function monthInsight(req, res) {
     }
 
     const stats = buildMonthStats(current, previous);
-    const summary = buildSummaryText(monthKey, stats);
+    // Mês atual (ou futuro) ainda não fechou: o texto fala em "até agora"
+    const ongoing = monthKey >= currentMonthKey();
+    const summary = buildSummaryText(monthKey, stats, { ongoing });
 
-    return res.status(200).json({ month: monthKey, summary, stats });
+    return res.status(200).json({ month: monthKey, ongoing, summary, stats });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Erro ao gerar o resumo do mês.' });

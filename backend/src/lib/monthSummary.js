@@ -89,9 +89,9 @@ function buildMonthStats(monthTransactions, previousTransactions) {
 
 // ---- Texto do resumo ----
 
-// Espaço comum no lugar do não separável que o Intl usa ("R$ 1.234,56")
-const money = (n) =>
-  n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }).replace(/ /g, ' ');
+// O Intl já põe um espaço não separável entre "R$" e o número:
+// ele é mantido de propósito, para o valor nunca quebrar em duas linhas.
+const money = (n) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 const pct = (n) => `${n.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`;
 
@@ -120,34 +120,57 @@ function biggestIncrease(stats) {
   return best;
 }
 
-function overviewParagraph(monthKey, stats) {
+// ongoing = o mês ainda não terminou (mês atual): o texto fala em "até agora"
+function overviewParagraph(monthKey, stats, ongoing) {
   const parts = [];
   const name = monthName(monthKey);
+  const opening = ongoing ? `Até agora, em ${name}, você` : `Em ${name} você`;
 
   if (stats.income > 0 && stats.expense > 0) {
-    parts.push(`Em ${name} você recebeu ${money(stats.income)} e gastou ${money(stats.expense)}.`);
+    parts.push(`${opening} recebeu ${money(stats.income)} e gastou ${money(stats.expense)}.`);
   } else if (stats.income > 0) {
-    parts.push(`Em ${name} você recebeu ${money(stats.income)} e não registrou despesas.`);
+    parts.push(`${opening} recebeu ${money(stats.income)} e não registrou despesas.`);
   } else {
-    parts.push(`Em ${name} você gastou ${money(stats.expense)} e não registrou receitas.`);
+    parts.push(`${opening} gastou ${money(stats.expense)} e não registrou receitas.`);
   }
 
   if (stats.income > 0 && stats.balance >= 0) {
-    parts.push(`Sobraram ${money(stats.balance)}, ou ${pct(stats.savingsRate)} da renda.`);
+    parts.push(
+      ongoing
+        ? `Por enquanto sobram ${money(stats.balance)}, ou ${pct(stats.savingsRate)} da renda.`
+        : `Sobraram ${money(stats.balance)}, ou ${pct(stats.savingsRate)} da renda.`,
+    );
   } else if (stats.income > 0) {
-    parts.push(`As despesas passaram as receitas em ${money(-stats.balance)}.`);
+    parts.push(
+      ongoing
+        ? `Por enquanto as despesas passam as receitas em ${money(-stats.balance)}.`
+        : `As despesas passaram as receitas em ${money(-stats.balance)}.`,
+    );
   }
 
   return parts.join(' ');
 }
 
-function highlightsParagraph(monthKey, stats) {
+function highlightsParagraph(monthKey, stats, ongoing) {
   const top = stats.expensesByCategory[0];
-  if (!top) return 'Não houve despesas no mês, então não há destaques de gastos.';
+  if (!top) {
+    return ongoing
+      ? 'Ainda não há despesas registradas neste mês.'
+      : 'Não houve despesas no mês, então não há destaques de gastos.';
+  }
 
   const parts = [
-    `O maior gasto foi ${top.name}, com ${money(top.total)} (${pct(top.share)} das despesas).`,
+    ongoing
+      ? `O maior gasto até agora é ${top.name}, com ${money(top.total)} (${pct(top.share)} das despesas).`
+      : `O maior gasto foi ${top.name}, com ${money(top.total)} (${pct(top.share)} das despesas).`,
   ];
+
+  // Comparar alguns dias com um mês inteiro daria quedas enganosas
+  // (ex.: "caíram 97%"); a comparação só aparece com o mês fechado.
+  if (ongoing) {
+    parts.push('A comparação com o mês anterior aparece quando o mês terminar.');
+    return parts.join(' ');
+  }
 
   const prev = stats.previousMonth;
   if (!prev.hasData) {
@@ -177,34 +200,47 @@ function highlightsParagraph(monthKey, stats) {
   return parts.join(' ');
 }
 
-function suggestionParagraph(stats) {
+function suggestionParagraph(stats, ongoing) {
   const top = stats.expensesByCategory[0];
-  const increase = biggestIncrease(stats);
+  const increase = ongoing ? null : biggestIncrease(stats);
+  const when = ongoing ? 'Até o fim do mês' : 'Para o próximo mês';
 
   if (!top) {
-    return 'Para o próximo mês, continue registrando receitas e despesas para acompanhar a evolução.';
+    return `${when}, continue registrando receitas e despesas para acompanhar a evolução.`;
+  }
+  // Sem receita lançada não dá para dizer que o mês "fechou no vermelho":
+  // o mais provável é a renda só não ter sido registrada.
+  if (stats.income === 0) {
+    return `${when}, registre também suas receitas para ver quanto sobra depois dos gastos.`;
   }
   if (stats.balance < 0) {
-    return `Para o próximo mês, vale rever os gastos com ${top.name}, a categoria que mais pesou, para voltar a fechar no azul.`;
+    return `${when}, vale rever os gastos com ${top.name}, a categoria que mais pesou, para fechar no azul.`;
   }
   if (increase && increase.changePct >= 20) {
     return `Para o próximo mês, vale acompanhar ${increase.name}, que teve o maior aumento.`;
   }
   if (stats.savingsRate !== null && stats.savingsRate < 10) {
-    return 'Para o próximo mês, tente separar uma parte da renda logo que ela entrar, antes dos gastos.';
+    return ongoing
+      ? 'Até o fim do mês, tente separar uma parte da renda antes dos próximos gastos.'
+      : 'Para o próximo mês, tente separar uma parte da renda logo que ela entrar, antes dos gastos.';
   }
   if (top.share >= 50) {
-    return `${top.name} concentrou mais da metade dos gastos. Um teto para essa categoria pode ajudar no próximo mês.`;
+    return ongoing
+      ? `${when}, vale acompanhar ${top.name}, que já concentra mais da metade dos gastos.`
+      : `${top.name} concentrou mais da metade dos gastos. Um teto para essa categoria pode ajudar no próximo mês.`;
   }
-  return 'Bom mês: mantenha o ritmo e continue registrando seus gastos para comparar no próximo mês.';
+  return ongoing
+    ? 'Até o fim do mês, mantenha o ritmo e continue registrando seus gastos.'
+    : 'Bom mês: mantenha o ritmo e continue registrando seus gastos para comparar no próximo mês.';
 }
 
-// 3 parágrafos separados por linha em branco: panorama, destaques e sugestão
-function buildSummaryText(monthKey, stats) {
+// 3 parágrafos separados por linha em branco: panorama, destaques e sugestão.
+// ongoing: true quando o mês ainda está em andamento (mês atual).
+function buildSummaryText(monthKey, stats, { ongoing = false } = {}) {
   return [
-    overviewParagraph(monthKey, stats),
-    highlightsParagraph(monthKey, stats),
-    suggestionParagraph(stats),
+    overviewParagraph(monthKey, stats, ongoing),
+    highlightsParagraph(monthKey, stats, ongoing),
+    suggestionParagraph(stats, ongoing),
   ].join('\n\n');
 }
 
