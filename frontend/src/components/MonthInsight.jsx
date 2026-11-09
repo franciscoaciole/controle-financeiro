@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { getMonthInsight } from '../services/insights';
 import { monthsWithTransactions, formatMonthKey } from '../lib/months';
 import { getErrorMessage } from '../lib/toast';
@@ -7,7 +7,7 @@ import { getErrorMessage } from '../lib/toast';
 function MonthInsight({ transactions }) {
   const months = monthsWithTransactions(transactions);
   const [month, setMonth] = useState(months[0] || '');
-  // Resumos já gerados ficam guardados por mês: trocar e voltar não gasta outra chamada
+  // Resumos já gerados ficam guardados por mês: trocar e voltar não refaz o pedido
   const [results, setResults] = useState({});
   const [loadingMonth, setLoadingMonth] = useState('');
   const [error, setError] = useState('');
@@ -42,7 +42,7 @@ function MonthInsight({ transactions }) {
     >
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div className="flex items-center gap-2.5">
-          <Sparkles size={16} className="text-accent shrink-0" aria-hidden="true" />
+          <FileText size={16} className="text-accent shrink-0" aria-hidden="true" />
           <div>
             <h2 id="month-insight-title" className="text-[13px] font-semibold">
               Resumo do mês
@@ -75,7 +75,7 @@ function MonthInsight({ transactions }) {
             disabled={isLoading}
             className="bg-accent text-bg px-4 py-2 rounded-[10px] text-[12.5px] font-semibold whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:opacity-60"
           >
-            {isLoading ? 'Gerando resumo…' : summary ? 'Gerar de novo' : 'Gerar resumo'}
+            {isLoading ? 'Gerando resumo…' : summary ? 'Atualizar' : 'Gerar resumo'}
           </button>
         </div>
       </div>
@@ -99,7 +99,7 @@ function MonthInsight({ transactions }) {
               </p>
             ))}
             <p className="text-[11px] text-muted-2 pt-1">
-              Texto gerado por IA. Os números do painel são a referência.
+              Calculado a partir das transações registradas no mês.
             </p>
           </div>
         )}

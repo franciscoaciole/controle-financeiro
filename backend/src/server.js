@@ -17,10 +17,6 @@ if (!process.env.JWT_SECRET) {
 if (process.env.JWT_SECRET.length < 32) {
   console.warn('AVISO: JWT_SECRET tem menos de 32 caracteres. Use uma chave mais longa e aleatória.');
 }
-// O app funciona sem a chave da IA; só o resumo do mês fica desligado
-if (!process.env.ANTHROPIC_API_KEY) {
-  console.warn('AVISO: ANTHROPIC_API_KEY não definida. O resumo do mês com IA ficará indisponível.');
-}
 
 const app = express();
 

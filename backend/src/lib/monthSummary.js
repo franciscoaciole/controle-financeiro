@@ -1,5 +1,7 @@
-// Funções puras do "Resumo do mês com IA": não acessam banco nem rede,
+// Funções puras do "Resumo do mês": não acessam banco nem rede,
 // por isso dá para testar tudo com node --test.
+// O texto é montado aqui mesmo, a partir dos totais: sem IA, sem custo e sem
+// enviar dados para fora do servidor.
 
 const MONTH_REGEX = /^(\d{4})-(0[1-9]|1[0-2])$/;
 
@@ -47,7 +49,7 @@ function totals(transactions) {
   return { income, expense, byCategory };
 }
 
-// Monta só números agregados: nenhuma descrição de transação sai do servidor.
+// Só números agregados: nenhuma descrição de transação entra no resumo.
 function buildMonthStats(monthTransactions, previousTransactions) {
   const current = totals(monthTransactions);
   const previous = totals(previousTransactions);
@@ -85,27 +87,130 @@ function buildMonthStats(monthTransactions, previousTransactions) {
   };
 }
 
-const SYSTEM_PROMPT = `Você é o assistente do Finan+, um app de controle de finanças pessoais.
-Escreva um resumo do mês em português do Brasil para o próprio usuário, a partir dos dados em JSON.
+// ---- Texto do resumo ----
 
-Regras:
-- Use somente os números fornecidos. Não invente valores, categorias nem motivos.
-- Valores em reais no formato R$ 1.234,56.
-- Exatamente 3 parágrafos curtos, separados por uma linha em branco, sem títulos, listas ou markdown:
-  1) como foi o mês (receitas, despesas, saldo e, se houver, quanto sobrou da renda);
-  2) o principal destaque dos gastos (categoria que mais pesou e, se houver mês anterior, a maior variação);
-  3) uma sugestão prática e realista para o próximo mês.
-- Tom direto e amigável, sem julgamentos. No máximo 110 palavras no total.
-- Não recomende investimentos, produtos financeiros nem empresas.`;
+// Espaço comum no lugar do não separável que o Intl usa ("R$ 1.234,56")
+const money = (n) =>
+  n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }).replace(/ /g, ' ');
 
-function buildPrompt(monthKey, stats) {
-  return `Mês: ${monthKey}\nDados:\n${JSON.stringify(stats, null, 2)}`;
+const pct = (n) => `${n.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`;
+
+function monthName(monthKey) {
+  const [year, month] = monthKey.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString('pt-BR', {
+    month: 'long',
+    timeZone: 'UTC',
+  });
+}
+
+function previousMonthKey(monthKey) {
+  const [year, month] = monthKey.split('-').map(Number);
+  const d = new Date(Date.UTC(year, month - 2, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+// Categoria com o maior aumento em reais em relação ao mês anterior
+function biggestIncrease(stats) {
+  let best = null;
+  for (const c of stats.expensesByCategory) {
+    if (c.changePct === null || c.changePct <= 0) continue;
+    const diff = c.total - c.previousTotal;
+    if (!best || diff > best.total - best.previousTotal) best = c;
+  }
+  return best;
+}
+
+function overviewParagraph(monthKey, stats) {
+  const parts = [];
+  const name = monthName(monthKey);
+
+  if (stats.income > 0 && stats.expense > 0) {
+    parts.push(`Em ${name} você recebeu ${money(stats.income)} e gastou ${money(stats.expense)}.`);
+  } else if (stats.income > 0) {
+    parts.push(`Em ${name} você recebeu ${money(stats.income)} e não registrou despesas.`);
+  } else {
+    parts.push(`Em ${name} você gastou ${money(stats.expense)} e não registrou receitas.`);
+  }
+
+  if (stats.income > 0 && stats.balance >= 0) {
+    parts.push(`Sobraram ${money(stats.balance)}, ou ${pct(stats.savingsRate)} da renda.`);
+  } else if (stats.income > 0) {
+    parts.push(`As despesas passaram as receitas em ${money(-stats.balance)}.`);
+  }
+
+  return parts.join(' ');
+}
+
+function highlightsParagraph(monthKey, stats) {
+  const top = stats.expensesByCategory[0];
+  if (!top) return 'Não houve despesas no mês, então não há destaques de gastos.';
+
+  const parts = [
+    `O maior gasto foi ${top.name}, com ${money(top.total)} (${pct(top.share)} das despesas).`,
+  ];
+
+  const prev = stats.previousMonth;
+  if (!prev.hasData) {
+    parts.push('Não há transações no mês anterior para comparar.');
+    return parts.join(' ');
+  }
+
+  const prevName = monthName(previousMonthKey(monthKey));
+  if (prev.expense > 0) {
+    const change = round2(((stats.expense - prev.expense) / prev.expense) * 100);
+    if (change > 0) {
+      parts.push(`No total, as despesas subiram ${pct(change)} em relação a ${prevName}.`);
+    } else if (change < 0) {
+      parts.push(`No total, as despesas caíram ${pct(-change)} em relação a ${prevName}.`);
+    } else {
+      parts.push(`No total, as despesas ficaram iguais às de ${prevName}.`);
+    }
+  }
+
+  const increase = biggestIncrease(stats);
+  if (increase) {
+    parts.push(
+      `O maior aumento foi em ${increase.name}: de ${money(increase.previousTotal)} para ${money(increase.total)}.`,
+    );
+  }
+
+  return parts.join(' ');
+}
+
+function suggestionParagraph(stats) {
+  const top = stats.expensesByCategory[0];
+  const increase = biggestIncrease(stats);
+
+  if (!top) {
+    return 'Para o próximo mês, continue registrando receitas e despesas para acompanhar a evolução.';
+  }
+  if (stats.balance < 0) {
+    return `Para o próximo mês, vale rever os gastos com ${top.name}, a categoria que mais pesou, para voltar a fechar no azul.`;
+  }
+  if (increase && increase.changePct >= 20) {
+    return `Para o próximo mês, vale acompanhar ${increase.name}, que teve o maior aumento.`;
+  }
+  if (stats.savingsRate !== null && stats.savingsRate < 10) {
+    return 'Para o próximo mês, tente separar uma parte da renda logo que ela entrar, antes dos gastos.';
+  }
+  if (top.share >= 50) {
+    return `${top.name} concentrou mais da metade dos gastos. Um teto para essa categoria pode ajudar no próximo mês.`;
+  }
+  return 'Bom mês: mantenha o ritmo e continue registrando seus gastos para comparar no próximo mês.';
+}
+
+// 3 parágrafos separados por linha em branco: panorama, destaques e sugestão
+function buildSummaryText(monthKey, stats) {
+  return [
+    overviewParagraph(monthKey, stats),
+    highlightsParagraph(monthKey, stats),
+    suggestionParagraph(stats),
+  ].join('\n\n');
 }
 
 module.exports = {
   parseMonth,
   currentMonthKey,
   buildMonthStats,
-  buildPrompt,
-  SYSTEM_PROMPT,
+  buildSummaryText,
 };

@@ -3,10 +3,8 @@ const {
   parseMonth,
   currentMonthKey,
   buildMonthStats,
-  buildPrompt,
-  SYSTEM_PROMPT,
+  buildSummaryText,
 } = require('../lib/monthSummary');
-const { generateText, AiError } = require('../services/anthropic');
 
 // POST /insights/month  { "month": "2026-10" }  (sem month = mês atual)
 async function monthInsight(req, res) {
@@ -37,16 +35,10 @@ async function monthInsight(req, res) {
     }
 
     const stats = buildMonthStats(current, previous);
-    const summary = await generateText({
-      system: SYSTEM_PROMPT,
-      prompt: buildPrompt(monthKey, stats),
-    });
+    const summary = buildSummaryText(monthKey, stats);
 
     return res.status(200).json({ month: monthKey, summary, stats });
   } catch (error) {
-    if (error instanceof AiError) {
-      return res.status(error.status).json({ error: error.message });
-    }
     console.error(error);
     return res.status(500).json({ error: 'Erro ao gerar o resumo do mês.' });
   }

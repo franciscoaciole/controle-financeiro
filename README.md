@@ -19,7 +19,7 @@ Aplicação web full stack de controle financeiro pessoal. Registre receitas e d
 - Dashboard com saldo total, receitas e despesas do mês, gastos por categoria e gráfico de evolução do saldo com filtro de período (1M, 3M, 6M e 1A)
 - Lançamento rápido em uma linha (ex.: "uber 25,90 ontem"): o app entende valor, data e categoria e mostra uma prévia antes de salvar
 - Importação de extrato bancário em OFX ou CSV, com prévia, categorização automática, detecção de lançamentos possivelmente duplicados e importação em lote
-- Resumo do mês com IA: no Dashboard, o usuário escolhe um mês e recebe um texto curto com o panorama de receitas e despesas, a categoria que mais pesou, a comparação com o mês anterior e uma sugestão prática
+- Resumo do mês: no Dashboard, o usuário escolhe um mês e recebe um texto curto com o panorama de receitas e despesas, a categoria que mais pesou, a comparação com o mês anterior e uma sugestão prática
 - Filtro de transações por receitas e despesas
 - Valores em reais e datas tratadas como dias de calendário, sem diferença de fuso
 - Layout responsivo: barra lateral no computador e barra de navegação inferior no celular
@@ -47,8 +47,6 @@ O app é responsivo e pode ser instalado na tela de início.
 
 **Backend:** Node.js, Express, Prisma ORM v7 (driver adapter `pg`), JWT (jsonwebtoken), bcryptjs, helmet e express-rate-limit
 
-**IA:** API da Anthropic (Claude), chamada só pelo backend
-
 **Banco de dados:** PostgreSQL (Neon)
 
 **Deploy:** Vercel (frontend) e Render (backend)
@@ -70,7 +68,7 @@ O frontend consome a API REST do backend. A autenticação usa token JWT enviado
 - **Sugestão de categoria local:** correspondência por palavras-chave, sem chamada externa, para resposta instantânea e custo zero.
 - **Leitura do extrato no navegador:** o arquivo é interpretado no frontend (OFX e CSV, com detecção de separador, colunas de débito/crédito e codificação UTF-8 ou Windows-1252), então nada sai do computador do usuário antes da confirmação na prévia.
 - **Importação tudo ou nada:** o backend valida o lote inteiro (até 500 lançamentos) e confere se todas as categorias pertencem ao usuário antes de gravar; se uma linha for inválida, nada é salvo.
-- **Resumo com IA no backend:** o servidor calcula os totais do mês (por categoria e em comparação com o mês anterior) e envia à IA apenas esses números agregados, nunca as descrições das transações. A chave da API fica só no servidor e o prompt proíbe inventar valores ou recomendar investimentos.
+- **Resumo do mês sem IA:** o servidor calcula os totais do mês (por categoria e em comparação com o mês anterior) e monta o texto com regras próprias, sem serviço externo. Assim não há custo por resumo, a resposta é instantânea, os números sempre batem com o painel e nenhum dado sai do servidor.
 - **Datas como dia de calendário:** as datas são gravadas e exibidas em UTC, para uma transação de 11 de outubro continuar aparecendo como 11 de outubro em qualquer fuso.
 - **Banco serverless:** Neon, que religa sozinho após inatividade, sem restauração manual. A troca veio depois de o plano gratuito do provedor anterior pausar o banco por inatividade.
 - **Backend gratuito:** a rota leve (`/ping`) está disponível para receber chamadas periódicas de um serviço externo e evitar que o servidor "durma", sem consultar o banco.
@@ -83,14 +81,13 @@ O frontend consome a API REST do backend. A autenticação usa token JWT enviado
 - Limite de requisições por IP e limite de tentativas de login e cadastro
 - A importação de extrato é a única rota com corpo maior (150 KB), com limite próprio de 10 importações por IP a cada 15 minutos
 - Cabeçalhos de segurança (`helmet`), limite de 10 KB no corpo das demais requisições e CORS configurado para o domínio de produção, o localhost e uma origem adicional opcional
-- O resumo com IA tem limite próprio de 10 pedidos por hora por usuário, para controlar o custo das chamadas
 - Variáveis sensíveis fora do repositório
 
 ## Limitações e próximos passos
 
 - O token fica no `localStorage` e não pode ser revogado antes de vencer (7 dias); uma melhoria seria cookie `httpOnly`
 - Não há recuperação de senha
-- Os testes automatizados cobrem as validações, a importação e o resumo do mês no backend (com o banco e a IA simulados) e os leitores de texto do frontend (lançamento rápido e extratos); ainda não cobrem as rotas contra um banco real nem os componentes de tela
+- Os testes automatizados cobrem as validações, a importação e o resumo do mês no backend (com o banco simulado) e os leitores de texto do frontend (lançamento rápido e extratos); ainda não cobrem as rotas contra um banco real nem os componentes de tela
 - A importação foi testada com amostras nos formatos mais comuns (OFX, CSV de conta e de fatura de cartão, CSV com débito/crédito); cada banco tem suas particularidades e alguns formatos podem precisar de ajuste
 - Próximos passos: detecção de assinaturas e gastos recorrentes, metas por categoria e resumos prontos
 
@@ -105,7 +102,7 @@ cd backend
 npm install
 ```
 
-Copie `backend/.env.example` para `backend/.env` e substitua os valores de exemplo por suas configurações locais. Gere um `JWT_SECRET` aleatório com pelo menos 32 caracteres; não use o valor de exemplo. Para o resumo do mês com IA, preencha `ANTHROPIC_API_KEY` com uma chave do [Console da Anthropic](https://console.anthropic.com/); sem ela, o restante do app funciona normalmente e só o resumo fica indisponível.
+Copie `backend/.env.example` para `backend/.env` e substitua os valores de exemplo por suas configurações locais. Gere um `JWT_SECRET` aleatório com pelo menos 32 caracteres; não use o valor de exemplo.
 
 ```bash
 npx prisma generate
