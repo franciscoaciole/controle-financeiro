@@ -97,7 +97,7 @@ function MonthInsight({ transactions }) {
         {!error && !isLoading && paragraphs.length > 0 && (
           <div className="space-y-3 max-w-[68ch]">
             {paragraphs.map((p, i) => (
-              <p key={i} className="text-[13.5px] leading-relaxed text-text/90">
+              <p key={i} className="money text-[13.5px] leading-relaxed text-text/90">
                 {p}
               </p>
             ))}

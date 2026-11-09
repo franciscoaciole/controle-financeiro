@@ -20,7 +20,13 @@ Aplicação web full stack de controle financeiro pessoal. Registre receitas e d
 - Lançamento rápido em uma linha (ex.: "uber 25,90 ontem"): o app entende valor, data e categoria e mostra uma prévia antes de salvar
 - Importação de extrato bancário em OFX ou CSV, com prévia, categorização automática, detecção de lançamentos possivelmente duplicados e importação em lote
 - Resumo do mês: no Dashboard, o usuário escolhe um mês e recebe um texto curto com o panorama de receitas e despesas, a categoria que mais pesou, a comparação com o mês anterior e uma sugestão prática
-- Filtro de transações por receitas e despesas
+- Tela de Transações com navegação por mês (entradas, saídas e saldo do período), lançamentos agrupados por dia com o saldo de cada dia, busca pela descrição (ignora acentos e procura em todos os meses) e filtro por receitas e despesas
+- Exclusão com "Desfazer": a transação some na hora e só é apagada no servidor depois de 5 segundos, sem janela de confirmação
+- Modo "esconder valores" (ícone de olho), que borra todos os valores em reais e fica salvo no navegador
+- Gráfico de categorias clicável: cada categoria abre a lista de transações já filtrada por ela e pelo mês
+- Tooltip do gráfico de evolução com o dia por extenso, o saldo e o que entrou e saiu no dia
+- Atalhos de teclado: N (nova transação), / (lançamento rápido), B (buscar), H (esconder valores) e ? (ver atalhos)
+- Esqueletos de carregamento no lugar de "Carregando..."
 - Valores em reais e datas tratadas como dias de calendário, sem diferença de fuso
 - Layout responsivo: barra lateral no computador e barra de navegação inferior no celular
 - Instalável na tela de início do celular e do tablet, com nome e ícone próprios (testado no iPad)

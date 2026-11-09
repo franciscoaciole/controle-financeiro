@@ -43,3 +43,40 @@ select option {
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
 }
+/* Modo "esconder valores": tudo com a classe money fica borrado */
+[data-hide-values='on'] .money {
+  /* proporcional ao tamanho do texto: o saldo grande também fica ilegível */
+  filter: blur(max(5px, 0.32em));
+  user-select: none;
+  transition: filter 0.2s ease;
+}
+.money {
+  transition: filter 0.2s ease;
+}
+
+/* Aviso entrando por baixo e barra do "Desfazer" esvaziando */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes toast-timer {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+.toast-enter {
+  animation: toast-in 0.18s ease-out;
+}
+.toast-timer {
+  animation-name: toast-timer;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-enter,
+  .toast-timer,
+  .money {
+    animation: none;
+    transition: none;
+  }
+}

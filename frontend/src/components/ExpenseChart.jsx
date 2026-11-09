@@ -18,7 +18,43 @@ function cutoffDate(months) {
   return `${d.getFullYear()}-${month}-${day}`;
 }
 
-function ExpenseChart({ data }) {
+// Tooltip do gráfico: dia por extenso, saldo e o que entrou e saiu no dia
+function DayTooltip({ active, payload, dayTotals }) {
+  if (!active || !payload?.length) return null;
+  const point = payload[0].payload;
+  const totals = dayTotals?.[point.date];
+  const [y, m, d] = point.date.split('-').map(Number);
+  const label = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('pt-BR', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  });
+
+  return (
+    <div className="bg-[#15151b]/95 backdrop-blur-xl border border-white/10 rounded-[10px] px-3 py-2.5 text-[12px] min-w-[160px] shadow-lg">
+      <p className="text-muted text-[11px] mb-1.5 first-letter:uppercase">{label}</p>
+      <div className="flex justify-between gap-4">
+        <span className="text-[#D9D8D3]">Saldo</span>
+        <span className="money num font-semibold">{formatCurrency(point.balance)}</span>
+      </div>
+      {totals?.income > 0 && (
+        <div className="flex justify-between gap-4 mt-1">
+          <span className="text-muted">Entrou</span>
+          <span className="money num text-pos">+{formatCurrency(totals.income)}</span>
+        </div>
+      )}
+      {totals?.expense > 0 && (
+        <div className="flex justify-between gap-4 mt-1">
+          <span className="text-muted">Saiu</span>
+          <span className="money num">-{formatCurrency(totals.expense)}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ExpenseChart({ data, dayTotals }) {
   const [period, setPeriod] = useState('3M');
 
   const current = PERIODS.find((p) => p.key === period);
@@ -45,7 +81,7 @@ function ExpenseChart({ data }) {
           <p className="text-[13px] font-semibold">Evolução do saldo</p>
           <p className="text-[11px] text-muted mt-0.5">
             Variação {current.text}:{' '}
-            <span className={`num font-medium ${change >= 0 ? 'text-pos' : 'text-neg'}`}>
+            <span className={`money num font-medium ${change >= 0 ? 'text-pos' : 'text-neg'}`}>
               {change >= 0 ? '+' : '-'}
               {formatCurrency(Math.abs(change))}
             </span>
@@ -96,14 +132,8 @@ function ExpenseChart({ data }) {
                 minTickGap={28}
               />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: '#15151b',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '10px',
-                  fontSize: '12px',
-                }}
-                labelStyle={{ color: '#F5F5F4' }}
-                formatter={(value) => [formatCurrency(value), 'Saldo']}
+                content={<DayTooltip dayTotals={dayTotals} />}
+                cursor={{ stroke: 'rgba(237,234,224,0.25)', strokeDasharray: '3 3' }}
               />
               <Area
                 type="monotone"
@@ -111,6 +141,7 @@ function ExpenseChart({ data }) {
                 stroke="#EDEAE0"
                 strokeWidth={2}
                 fill="url(#colorBalance)"
+                activeDot={{ r: 4, fill: '#EDEAE0', stroke: '#08080C', strokeWidth: 2 }}
               />
             </AreaChart>
           </ResponsiveContainer>

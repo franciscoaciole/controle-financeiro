@@ -6,7 +6,7 @@ import { formatISODate } from '../lib/dates';
 
 // Linha única para lançar transações: "uber 25,90 ontem".
 // Mostra o que foi entendido antes de salvar, para o usuário conferir.
-function QuickEntry({ categories, onCreate }) {
+function QuickEntry({ categories, onCreate, inputRef }) {
   const [text, setText] = useState('');
   const [chosenCategoryId, setChosenCategoryId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,6 +54,7 @@ function QuickEntry({ categories, onCreate }) {
         </span>
         <div className="flex gap-2">
           <input
+            ref={inputRef}
             type="text"
             value={text}
             onChange={(e) => setText(e.target.value)}

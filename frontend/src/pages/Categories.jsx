@@ -7,6 +7,8 @@ import {
   deleteCategory,
 } from '../services/categories';
 import CategoryModal from '../components/CategoryModal';
+import ConfirmDialog from '../components/ConfirmDialog';
+import { CategoriesSkeleton } from '../components/Skeleton';
 import { showToast, getErrorMessage } from '../lib/toast';
 
 function Categories() {
@@ -14,6 +16,7 @@ function Categories() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
+  const [deleting, setDeleting] = useState(null); // categoria aguardando confirmação
 
   const [reloadKey, setReloadKey] = useState(0);
   const reload = () => setReloadKey((k) => k + 1);
@@ -70,10 +73,10 @@ function Categories() {
     }
   }
 
-  async function handleDelete(id) {
-    if (!confirm('Excluir esta categoria?')) return;
+  async function handleDelete() {
     try {
-      await deleteCategory(id);
+      await deleteCategory(deleting.id);
+      setDeleting(null);
       showToast('Categoria excluída.', 'success');
       reload();
     } catch (error) {
@@ -83,11 +86,7 @@ function Categories() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-muted">Carregando...</p>
-      </div>
-    );
+    return <CategoriesSkeleton />;
   }
 
   return (
@@ -137,13 +136,15 @@ function Categories() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => openEditModal(cat)}
-                    className="text-muted hover:text-text"
+                    aria-label={`Editar ${cat.name}`}
+                    className="text-muted hover:text-text p-1 -m-1"
                   >
                     <Pencil size={13} />
                   </button>
                   <button
-                    onClick={() => handleDelete(cat.id)}
-                    className="text-muted hover:text-neg"
+                    onClick={() => setDeleting(cat)}
+                    aria-label={`Excluir ${cat.name}`}
+                    className="text-muted hover:text-neg p-1 -m-1"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -160,6 +161,14 @@ function Categories() {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={Boolean(deleting)}
+        title="Excluir categoria"
+        message={`A categoria “${deleting?.name}” será excluída. Categorias com transações não podem ser excluídas.`}
+        onConfirm={handleDelete}
+        onClose={() => setDeleting(null)}
+      />
 
       <CategoryModal
         isOpen={modalOpen}

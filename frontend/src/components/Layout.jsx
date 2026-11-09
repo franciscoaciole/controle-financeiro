@@ -1,11 +1,54 @@
-import { useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
-import { LayoutDashboard, Receipt, Tags, LogOut } from 'lucide-react';
+import { LayoutDashboard, Receipt, Tags, LogOut, Eye, EyeOff, Keyboard } from 'lucide-react';
+import { toggleHidden } from '../lib/privacy';
+import { shortcutFor } from '../lib/shortcuts';
+import { useHideValues } from '../hooks/useHideValues';
+import ShortcutsHelp from './ShortcutsHelp';
+
+// Botão do olho: esconde ou mostra todos os valores em reais
+function PrivacyButton({ className = '', showLabel = false }) {
+  const hidden = useHideValues();
+  const label = hidden ? 'Mostrar valores' : 'Esconder valores';
+  const Icon = hidden ? EyeOff : Eye;
+  return (
+    <button
+      type="button"
+      onClick={toggleHidden}
+      aria-pressed={hidden}
+      aria-label={showLabel ? undefined : label}
+      title={`${label} (H)`}
+      className={`flex items-center gap-2 text-muted hover:text-text transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 rounded-lg ${className}`}
+    >
+      <Icon size={showLabel ? 14 : 17} />
+      {showLabel && label}
+    </button>
+  );
+}
 
 function Layout({ children }) {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const [helpOpen, setHelpOpen] = useState(false);
+
+  // Atalhos de teclado do app inteiro
+  useEffect(() => {
+    function handleKeyDown(e) {
+      const modalOpen = Boolean(document.querySelector('[role="dialog"]'));
+      const action = shortcutFor(e, { modalOpen });
+      if (!action) return;
+      e.preventDefault();
+
+      if (action === 'toggle-values') toggleHidden();
+      else if (action === 'help') setHelpOpen(true);
+      else navigate('/transactions', { state: { action } });
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
 
   const navItems = [
     { to: '/dashboard', label: 'Início', icon: LayoutDashboard },
@@ -58,8 +101,20 @@ function Layout({ children }) {
           })}
         </nav>
 
-        {/* Footer: usuário + logout */}
+        {/* Footer: preferências, usuário e logout */}
         <div className="mt-auto flex flex-col gap-2">
+          <div className="flex flex-col gap-0.5 mb-1">
+            <PrivacyButton showLabel className="px-[10px] py-2 text-[12.5px]" />
+            <button
+              type="button"
+              onClick={() => setHelpOpen(true)}
+              title="Atalhos do teclado (?)"
+              className="flex items-center gap-2 px-[10px] py-2 rounded-lg text-[12.5px] text-muted hover:text-text transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+            >
+              <Keyboard size={14} />
+              Atalhos do teclado
+            </button>
+          </div>
           <div className="flex items-center gap-[10px] p-[10px] rounded-xl bg-panel border border-panel-border">
             <div className="w-8 h-8 rounded-[9px] bg-[#232228] flex items-center justify-center font-display font-semibold text-xs text-accent flex-shrink-0">
               {initial}
@@ -94,6 +149,7 @@ function Layout({ children }) {
           </div>
 
           <div className="flex items-center gap-1">
+            <PrivacyButton className="w-9 h-9 justify-center" />
             <div className="w-8 h-8 rounded-[9px] bg-panel-strong flex items-center justify-center font-display font-semibold text-xs text-accent">
               {initial}
             </div>
@@ -137,6 +193,8 @@ function Layout({ children }) {
           })}
         </div>
       </nav>
+
+      <ShortcutsHelp isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 }

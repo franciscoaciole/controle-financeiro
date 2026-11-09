@@ -3,9 +3,26 @@
 const listeners = new Set();
 let nextId = 1;
 
-export function showToast(message, type = 'error') {
-  const toast = { id: nextId++, message, type };
-  listeners.forEach((listener) => listener(toast));
+function emit(event) {
+  listeners.forEach((listener) => listener(event));
+}
+
+// options.action: { label, onClick } mostra um botão no aviso (ex.: "Desfazer")
+// options.duration: tempo na tela, em ms. Devolve o id do aviso.
+export function showToast(message, type = 'error', options = {}) {
+  const toast = {
+    id: nextId++,
+    message,
+    type,
+    action: options.action || null,
+    duration: options.duration ?? 4500,
+  };
+  emit({ kind: 'show', toast });
+  return toast.id;
+}
+
+export function dismissToast(id) {
+  emit({ kind: 'dismiss', id });
 }
 
 export function subscribe(listener) {
